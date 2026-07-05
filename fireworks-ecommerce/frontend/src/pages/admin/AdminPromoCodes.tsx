@@ -148,7 +148,7 @@ export default function AdminPromoCodes() {
               <input
                 type="number" min={0}
                 value={form.minOrderValue}
-                onChange={(e) => setForm((f) => ({ ...f, minOrderValue: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, minOrderValue: Number(e.target.value) }))}
                 className="input-field mt-1"
               />
             </div>
