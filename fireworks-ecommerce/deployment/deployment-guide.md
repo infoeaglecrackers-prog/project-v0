@@ -134,9 +134,9 @@ SMTP_HOST          = smtp.gmail.com
 SMTP_PORT          = 587
 SMTP_EMAIL         = youremail@gmail.com
 SMTP_PASSWORD      = your_app_password
-FROM_EMAIL         = noreply@crackersbazaar.com
-FROM_NAME          = Crackers Bazaar
-CLIENT_URL         = https://www.crackersbazaar.com
+FROM_EMAIL         = noreply@eaglecrackers.com
+FROM_NAME          = Eagle Crackers
+CLIENT_URL         = https://www.eaglecrackers.com
 
 # 6. Deploy → Wait for build to finish
 # 7. Your API will be at: https://fireworks-api.onrender.com
@@ -169,7 +169,7 @@ Output Directory:   dist
 Install Command:    npm install
 
 # 4. Environment Variables:
-VITE_API_URL           = https://api.crackersbazaar.com/api
+VITE_API_URL           = https://api.eaglecrackers.com/api
 VITE_RAZORPAY_KEY      = rzp_live_xxxxxxxxxxxx
 VITE_CLOUDINARY_NAME   = your-cloud-name
 
@@ -177,7 +177,7 @@ VITE_CLOUDINARY_NAME   = your-cloud-name
 # 6. Your site: https://fireworks-store.vercel.app
 
 # 7. Later, add custom domain in:
-# Project → Settings → Domains → Add: www.crackersbazaar.com
+# Project → Settings → Domains → Add: www.eaglecrackers.com
 ```
 
 ---

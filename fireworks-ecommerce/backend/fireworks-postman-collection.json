@@ -1,0 +1,893 @@
+{
+  "info": {
+    "name": "Fireworks & Crackers E-Commerce API",
+    "_postman_id": "fireworks-ecommerce-api-collection",
+    "description": "Complete API collection for Fireworks & Crackers E-Commerce MERN Backend.\n\n**Setup:**\n1. Set the `base_url` variable to `http://localhost:5000/api`\n2. After login/register, copy the `accessToken` from the response and set it in the `access_token` variable.\n3. Admin routes require a user with role `admin`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000/api", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "product_id", "value": "", "type": "string" },
+    { "key": "category_id", "value": "", "type": "string" },
+    { "key": "order_id", "value": "", "type": "string" },
+    { "key": "review_id", "value": "", "type": "string" },
+    { "key": "address_id", "value": "", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "razorpay_order_id", "value": "", "type": "string" },
+    { "key": "reset_token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "1.1 Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('access_token', res.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi@example.com\",\n  \"password\": \"MyPass@123\",\n  \"phone\": \"9876543210\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "1.2 Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('access_token', res.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ravi@example.com\",\n  \"password\": \"MyPass@123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "1.3 Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        },
+        {
+          "name": "1.4 Refresh Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.accessToken) {",
+                  "  pm.collectionVariables.set('access_token', res.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/auth/refresh-token", "host": ["{{base_url}}"], "path": ["auth", "refresh-token"] }
+          }
+        },
+        {
+          "name": "1.5 Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ravi@example.com\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/forgot-password", "host": ["{{base_url}}"], "path": ["auth", "forgot-password"] }
+          }
+        },
+        {
+          "name": "1.6 Reset Password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NewPass@456\",\n  \"confirmPassword\": \"NewPass@456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/reset-password/{{reset_token}}", "host": ["{{base_url}}"], "path": ["auth", "reset-password", "{{reset_token}}"] }
+          }
+        },
+        {
+          "name": "1.7 Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. User",
+      "item": [
+        {
+          "name": "2.1 Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/users/profile", "host": ["{{base_url}}"], "path": ["users", "profile"] }
+          }
+        },
+        {
+          "name": "2.2 Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ravi Kumar Updated\",\n  \"phone\": \"9123456780\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/users/profile", "host": ["{{base_url}}"], "path": ["users", "profile"] }
+          }
+        },
+        {
+          "name": "2.3 Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"MyPass@123\",\n  \"newPassword\": \"NewPass@456\",\n  \"confirmPassword\": \"NewPass@456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/users/password", "host": ["{{base_url}}"], "path": ["users", "password"] }
+          }
+        },
+        {
+          "name": "2.4 Upload Avatar",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "avatar", "type": "file", "src": "" }]
+            },
+            "url": { "raw": "{{base_url}}/users/avatar", "host": ["{{base_url}}"], "path": ["users", "avatar"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Products",
+      "item": [
+        {
+          "name": "3.1 Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/products?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "keyword", "value": "", "disabled": true },
+                { "key": "category", "value": "", "disabled": true },
+                { "key": "minPrice", "value": "", "disabled": true },
+                { "key": "maxPrice", "value": "", "disabled": true },
+                { "key": "sort", "value": "-createdAt", "disabled": true },
+                { "key": "inStock", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.2 Get Single Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/products/{{product_id}}", "host": ["{{base_url}}"], "path": ["products", "{{product_id}}"] }
+          }
+        },
+        {
+          "name": "3.3 Get Featured Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/products/featured", "host": ["{{base_url}}"], "path": ["products", "featured"] }
+          }
+        },
+        {
+          "name": "3.4 Get Best Sellers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/products/bestsellers", "host": ["{{base_url}}"], "path": ["products", "bestsellers"] }
+          }
+        },
+        {
+          "name": "3.5 Create Product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Deluxe Sky Shot\",\n  \"description\": \"A premium sky shot with 30 shots.\",\n  \"price\": 499,\n  \"category\": \"{{category_id}}\",\n  \"stock\": 100,\n  \"sku\": \"SKY-001\",\n  \"netWeight\": \"500g\",\n  \"isFeatured\": false,\n  \"tags\": [\"sky shot\", \"diwali\"]\n}"
+            },
+            "url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "3.6 Update Product (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 599,\n  \"stock\": 80,\n  \"isFeatured\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/products/{{product_id}}", "host": ["{{base_url}}"], "path": ["products", "{{product_id}}"] }
+          }
+        },
+        {
+          "name": "3.7 Delete Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/products/{{product_id}}", "host": ["{{base_url}}"], "path": ["products", "{{product_id}}"] }
+          }
+        },
+        {
+          "name": "3.8 Upload Product Images (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "images", "type": "file", "src": "" },
+                { "key": "images", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/products/{{product_id}}/images", "host": ["{{base_url}}"], "path": ["products", "{{product_id}}", "images"] }
+          }
+        },
+        {
+          "name": "3.9 Delete Product Image (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/products/{{product_id}}/images/:imgId", "host": ["{{base_url}}"], "path": ["products", "{{product_id}}", "images", ":imgId"], "variable": [{ "key": "imgId", "value": "cloudinary_public_id_here" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Categories",
+      "item": [
+        {
+          "name": "4.1 Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "4.2 Get Single Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/categories/{{category_id}}", "host": ["{{base_url}}"], "path": ["categories", "{{category_id}}"] }
+          }
+        },
+        {
+          "name": "4.3 Create Category (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data._id) {",
+                  "  pm.collectionVariables.set('category_id', res.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sky Shots\",\n  \"description\": \"Multi-shot aerial fireworks\",\n  \"sortOrder\": 1\n}"
+            },
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "4.4 Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sky Shots Updated\",\n  \"sortOrder\": 2\n}"
+            },
+            "url": { "raw": "{{base_url}}/categories/{{category_id}}", "host": ["{{base_url}}"], "path": ["categories", "{{category_id}}"] }
+          }
+        },
+        {
+          "name": "4.5 Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/categories/{{category_id}}", "host": ["{{base_url}}"], "path": ["categories", "{{category_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Cart",
+      "item": [
+        {
+          "name": "5.1 Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/cart", "host": ["{{base_url}}"], "path": ["cart"] }
+          }
+        },
+        {
+          "name": "5.2 Add Item to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": { "raw": "{{base_url}}/cart", "host": ["{{base_url}}"], "path": ["cart"] }
+          }
+        },
+        {
+          "name": "5.3 Update Cart Item Quantity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 5\n}"
+            },
+            "url": { "raw": "{{base_url}}/cart/{{product_id}}", "host": ["{{base_url}}"], "path": ["cart", "{{product_id}}"] }
+          }
+        },
+        {
+          "name": "5.4 Remove Item from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/cart/{{product_id}}", "host": ["{{base_url}}"], "path": ["cart", "{{product_id}}"] }
+          }
+        },
+        {
+          "name": "5.5 Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/cart", "host": ["{{base_url}}"], "path": ["cart"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Wishlist",
+      "item": [
+        {
+          "name": "6.1 Get Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/wishlist", "host": ["{{base_url}}"], "path": ["wishlist"] }
+          }
+        },
+        {
+          "name": "6.2 Toggle Wishlist (Add/Remove)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/wishlist/{{product_id}}", "host": ["{{base_url}}"], "path": ["wishlist", "{{product_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Orders",
+      "item": [
+        {
+          "name": "7.1 Place New Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data._id) {",
+                  "  pm.collectionVariables.set('order_id', res.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"product\": \"{{product_id}}\", \"quantity\": 2, \"price\": 499 }\n  ],\n  \"shippingAddress\": {\n    \"fullName\": \"Ravi Kumar\",\n    \"phone\": \"9876543210\",\n    \"addressLine1\": \"12 Main Street\",\n    \"city\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"India\"\n  },\n  \"paymentMethod\": \"cod\",\n  \"totalAmount\": 998\n}"
+            },
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "7.2 Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/orders?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "7.3 Get Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/orders/{{order_id}}", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}"] }
+          }
+        },
+        {
+          "name": "7.4 Cancel Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Changed my mind\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/orders/{{order_id}}/cancel", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "cancel"] }
+          }
+        },
+        {
+          "name": "7.5 Download Invoice",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/orders/{{order_id}}/invoice", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "invoice"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Payment",
+      "item": [
+        {
+          "name": "8.1 Create Razorpay Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.razorpayOrderId) {",
+                  "  pm.collectionVariables.set('razorpay_order_id', res.data.razorpayOrderId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/payment/create-order", "host": ["{{base_url}}"], "path": ["payment", "create-order"] }
+          }
+        },
+        {
+          "name": "8.2 Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_order_id\": \"{{razorpay_order_id}}\",\n  \"razorpay_payment_id\": \"pay_xxxxx\",\n  \"razorpay_signature\": \"signature_hash_here\",\n  \"orderId\": \"{{order_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/payment/verify", "host": ["{{base_url}}"], "path": ["payment", "verify"] }
+          }
+        },
+        {
+          "name": "8.3 Razorpay Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-razorpay-signature", "value": "webhook_signature_here" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_xxxxx\",\n        \"order_id\": \"order_xxxxx\"\n      }\n    }\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/payment/webhook", "host": ["{{base_url}}"], "path": ["payment", "webhook"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Reviews",
+      "item": [
+        {
+          "name": "9.1 Get Reviews for a Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/product/{{product_id}}?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "product", "{{product_id}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "9.2 Add Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data._id) {",
+                  "  pm.collectionVariables.set('review_id', res.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Amazing product!\",\n  \"comment\": \"Best sky shot I have ever used. Highly recommended!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/reviews/product/{{product_id}}", "host": ["{{base_url}}"], "path": ["reviews", "product", "{{product_id}}"] }
+          }
+        },
+        {
+          "name": "9.3 Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"title\": \"Great product\",\n  \"comment\": \"Updated review comment.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/reviews/{{review_id}}", "host": ["{{base_url}}"], "path": ["reviews", "{{review_id}}"] }
+          }
+        },
+        {
+          "name": "9.4 Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/reviews/{{review_id}}", "host": ["{{base_url}}"], "path": ["reviews", "{{review_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Addresses",
+      "item": [
+        {
+          "name": "10.1 Get All Addresses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/addresses", "host": ["{{base_url}}"], "path": ["addresses"] }
+          }
+        },
+        {
+          "name": "10.2 Add New Address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data._id) {",
+                  "  pm.collectionVariables.set('address_id', res.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ravi Kumar\",\n  \"phone\": \"9876543210\",\n  \"addressLine1\": \"12 Main Street\",\n  \"addressLine2\": \"Near Bus Stand\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"pincode\": \"600001\",\n  \"country\": \"India\",\n  \"isDefault\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/addresses", "host": ["{{base_url}}"], "path": ["addresses"] }
+          }
+        },
+        {
+          "name": "10.3 Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressLine1\": \"45 New Street\",\n  \"city\": \"Coimbatore\",\n  \"pincode\": \"641001\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/addresses/{{address_id}}", "host": ["{{base_url}}"], "path": ["addresses", "{{address_id}}"] }
+          }
+        },
+        {
+          "name": "10.4 Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/addresses/{{address_id}}", "host": ["{{base_url}}"], "path": ["addresses", "{{address_id}}"] }
+          }
+        },
+        {
+          "name": "10.5 Set Default Address",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/addresses/{{address_id}}/default", "host": ["{{base_url}}"], "path": ["addresses", "{{address_id}}", "default"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Admin",
+      "item": [
+        {
+          "name": "11.1 Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/admin/dashboard", "host": ["{{base_url}}"], "path": ["admin", "dashboard"] }
+          }
+        },
+        {
+          "name": "11.2 Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/orders?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "11.3 Get Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/admin/orders/{{order_id}}", "host": ["{{base_url}}"], "path": ["admin", "orders", "{{order_id}}"] }
+          }
+        },
+        {
+          "name": "11.4 Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"shipped\",\n  \"trackingNumber\": \"TRK123456789\",\n  \"courier\": \"BlueDart\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/admin/orders/{{order_id}}/status", "host": ["{{base_url}}"], "path": ["admin", "orders", "{{order_id}}", "status"] }
+          }
+        },
+        {
+          "name": "11.5 Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/users?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "keyword", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "11.6 Get User Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/admin/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["admin", "users", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "11.7 Change User Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/admin/users/{{user_id}}/role", "host": ["{{base_url}}"], "path": ["admin", "users", "{{user_id}}", "role"] }
+          }
+        },
+        {
+          "name": "11.8 Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/admin/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["admin", "users", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "11.9 Get Low Stock Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/products/low-stock?threshold=10",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products", "low-stock"],
+              "query": [{ "key": "threshold", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "11.10 Revenue Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/revenue?period=monthly",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "revenue"],
+              "query": [{ "key": "period", "value": "monthly" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Server Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://localhost:5000/health", "host": ["http://localhost:5000"], "path": ["health"] }
+          }
+        }
+      ]
+    }
+  ]
+}

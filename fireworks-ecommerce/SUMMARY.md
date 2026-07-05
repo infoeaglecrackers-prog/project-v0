@@ -131,9 +131,9 @@ backend/
 ## 🌐 Production URLs (after deployment)
 
 ```
-Website:     https://www.crackersbazaar.com
-Admin Panel: https://www.crackersbazaar.com/admin
-REST API:    https://api.crackersbazaar.com/api
+Website:     https://www.eaglecrackers.com
+Admin Panel: https://www.eaglecrackers.com/admin
+REST API:    https://api.eaglecrackers.com/api
 Database:    MongoDB Atlas (Cloud)
 Images CDN:  Cloudinary
 ```
