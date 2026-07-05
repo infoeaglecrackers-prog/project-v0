@@ -8,6 +8,8 @@ export const paymentService = {
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature: string;
-    orderId: string;
+    shippingAddress: object;
+    items: { productId: string; quantity: number }[];
+    promoCode?: string;
   }) => api.post("/payment/verify", data),
 };

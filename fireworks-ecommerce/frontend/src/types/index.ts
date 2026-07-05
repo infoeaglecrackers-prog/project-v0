@@ -1,3 +1,16 @@
+// ─── Promo ────────────────────────────────────────────────────────────────────
+export interface IPromo {
+  _id: string;
+  code: string;
+  discountPercent: number;
+  isActive: boolean;
+  expiresAt?: string;
+  minOrderValue: number;
+  usageLimit?: number;
+  usedCount: number;
+  createdAt: string;
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 export interface IUser {
   _id: string;
@@ -7,6 +20,7 @@ export interface IUser {
   avatar?: { url: string; public_id?: string };
   role: "user" | "admin";
   isVerified: boolean;
+  phoneVerified?: boolean;
   createdAt: string;
   updatedAt?: string;
 }

@@ -8,6 +8,9 @@ import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
 import sendEmail from "../utils/sendEmail";
 import { orderConfirmationTemplate } from "../templates/email.templates";
+import { generateInvoicePDF } from "../utils/generateInvoice";
+import { resolvePromoDiscount } from "../utils/applyPromo";
+import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
 import { IOrderItem } from "../models/Order";
 
 interface OrderItemInput {
@@ -23,17 +26,26 @@ const SHIPPING_CHARGE = 99;
 export const createRazorpayOrder = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { amount } = req.body;
-    if (!amount || amount <= 0) {
-      return next(new AppError("Invalid amount.", 400));
+    if (!amount || amount < 100) {
+      return next(new AppError("Order amount must be at least ₹1.", 400));
     }
 
     const options = {
       amount: Math.round(amount), // amount in paise
       currency: "INR",
-      receipt: `receipt_${req.user!._id}_${Date.now()}`,
+      // Razorpay caps `receipt` at 40 chars — a full ObjectId + prefix + timestamp overflows that
+      receipt: `rcpt_${req.user!._id.toString().slice(-8)}_${Date.now()}`,
     };
 
-    const razorpayOrder = await razorpayInstance.orders.create(options);
+    let razorpayOrder;
+    try {
+      razorpayOrder = await razorpayInstance.orders.create(options);
+    } catch (err) {
+      // The Razorpay SDK throws a plain object ({ statusCode, error: { description } }),
+      // not an Error — surface its real message instead of a generic 500.
+      const rzpErr = err as { statusCode?: number; error?: { description?: string } };
+      return next(new AppError(rzpErr.error?.description || "Razorpay order creation failed.", rzpErr.statusCode || 400));
+    }
 
     res.status(200).json({
       success: true,
@@ -54,12 +66,14 @@ export const verifyPayment = catchAsync(
       razorpay_signature,
       shippingAddress,
       items,
+      promoCode,
     } = req.body as {
       razorpay_order_id: string;
       razorpay_payment_id: string;
       razorpay_signature: string;
       shippingAddress: object;
       items: OrderItemInput[];
+      promoCode?: string;
     };
 
     // Verify HMAC signature
@@ -93,9 +107,12 @@ export const verifyPayment = catchAsync(
       } as IOrderItem);
     }
 
-    const taxAmount = parseFloat((itemsPrice * GST_RATE).toFixed(2));
-    const shippingPrice = itemsPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-    const totalAmount = parseFloat((itemsPrice + taxAmount + shippingPrice).toFixed(2));
+    const { promo, discountAmount } = await resolvePromoDiscount(promoCode, itemsPrice);
+
+    const taxableAmount = itemsPrice - discountAmount;
+    const taxAmount = parseFloat((taxableAmount * GST_RATE).toFixed(2));
+    const shippingPrice = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
+    const totalAmount = parseFloat((taxableAmount + taxAmount + shippingPrice).toFixed(2));
 
     const order = await Order.create({
       user: req.user!._id,
@@ -110,6 +127,8 @@ export const verifyPayment = catchAsync(
         paidAt: new Date(),
       },
       itemsPrice,
+      promoCode: promo?.code,
+      discountAmount,
       taxAmount,
       shippingPrice,
       totalAmount,
@@ -119,6 +138,11 @@ export const verifyPayment = catchAsync(
         { status: "Processing", updatedAt: new Date(), note: "Payment received" },
       ],
     });
+
+    if (promo) {
+      promo.usedCount += 1;
+      await promo.save();
+    }
 
     // Reduce stock
     await Promise.all(
@@ -135,20 +159,40 @@ export const verifyPayment = catchAsync(
       { items: [], totalItems: 0, totalPrice: 0 }
     );
 
-    // Confirmation email
+    // Confirmation email + WhatsApp invoice — both non-blocking, independent of each other
+    let invoicePdf: Buffer | undefined;
     try {
-      await sendEmail({
-        to: req.user!.email,
-        subject: `Order Confirmed — #${order._id}`,
-        html: orderConfirmationTemplate(
-          req.user!.name,
-          order._id.toString(),
-          orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
-          totalAmount
-        ),
-      });
-    } catch {
-      // Non-blocking
+      invoicePdf = await generateInvoicePDF(order, req.user!);
+    } catch (err) {
+      console.error("Invoice PDF generation failed:", err);
+    }
+
+    if (invoicePdf) {
+      try {
+        await sendEmail({
+          to: req.user!.email,
+          subject: `Order Confirmed — #${order._id}`,
+          html: orderConfirmationTemplate(
+            req.user!.name,
+            order._id.toString(),
+            orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            totalAmount
+          ),
+          attachments: [
+            { filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" },
+          ],
+        });
+      } catch (err) {
+        console.error("Order confirmation email failed:", err);
+      }
+
+      if (req.user!.phone) {
+        try {
+          await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+        } catch (err) {
+          console.error("WhatsApp invoice send failed:", err);
+        }
+      }
     }
 
     res.status(200).json({

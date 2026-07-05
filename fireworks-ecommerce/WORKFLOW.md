@@ -276,7 +276,7 @@ Frontend Development:
 | BigRock     | ₹500-900/yr    | India based              |
 
 **Good domain name ideas:**
-- `crackersbazaar.com`
+- `eaglecrackers.com`
 - `buyfireworks.in`
 - `diwalistore.in`
 - `crackerzone.in`
@@ -304,7 +304,7 @@ Benefits of Cloudflare:
 ```
 In Vercel:
 1. Go to Project → Settings → Domains
-2. Add domain: www.crackersbazaar.com
+2. Add domain: www.eaglecrackers.com
 3. Vercel gives you DNS records to add
 
 In Cloudflare DNS:
@@ -323,13 +323,13 @@ In Cloudflare DNS, add CNAME record:
   Name:  api
   Target: fireworks-api.onrender.com
 
-This gives you: https://api.crackersbazaar.com
+This gives you: https://api.eaglecrackers.com
 
 Update frontend .env:
-  VITE_API_URL=https://api.crackersbazaar.com/api
+  VITE_API_URL=https://api.eaglecrackers.com/api
 
 Update backend CORS:
-  CLIENT_URL=https://www.crackersbazaar.com
+  CLIENT_URL=https://www.eaglecrackers.com
 ```
 
 ### Step 5.5 — SSL Certificate
@@ -337,7 +337,7 @@ Update backend CORS:
 Cloudflare provides free SSL automatically.
 Mode: Full (Strict) - encrypts traffic end to end
 
-Verify: Visit https://www.crackersbazaar.com
+Verify: Visit https://www.eaglecrackers.com
 You should see 🔒 padlock in browser
 ```
 
@@ -348,9 +348,9 @@ You should see 🔒 padlock in browser
 ### Step 6.1 — Google Search Console
 ```
 1. Go to search.google.com/search-console
-2. Add Property → URL prefix: https://www.crackersbazaar.com
+2. Add Property → URL prefix: https://www.eaglecrackers.com
 3. Verify ownership via DNS record (Cloudflare)
-4. Submit sitemap: https://www.crackersbazaar.com/sitemap.xml
+4. Submit sitemap: https://www.eaglecrackers.com/sitemap.xml
 ```
 
 ### Step 6.2 — Google Analytics

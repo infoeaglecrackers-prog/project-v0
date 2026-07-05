@@ -51,6 +51,8 @@ export interface IOrder extends Document {
   shippingAddress: IShippingAddress;
   paymentInfo: IPaymentInfo;
   itemsPrice: number;
+  promoCode?: string;
+  discountAmount: number;
   taxAmount: number;
   shippingPrice: number;
   totalAmount: number;
@@ -108,6 +110,8 @@ const OrderSchema = new Schema<IOrder>(
       paidAt: { type: Date },
     },
     itemsPrice: { type: Number, required: true },
+    promoCode: { type: String },
+    discountAmount: { type: Number, default: 0 },
     taxAmount: { type: Number, required: true },
     shippingPrice: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },

@@ -6,6 +6,9 @@ import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
 import sendEmail from "../utils/sendEmail";
 import { orderConfirmationTemplate } from "../templates/email.templates";
+import { generateInvoicePDF } from "../utils/generateInvoice";
+import { resolvePromoDiscount } from "../utils/applyPromo";
+import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
 import { IOrderItem } from "../models/Order";
 
 const GST_RATE = 0.18;
@@ -20,10 +23,11 @@ interface OrderItemInput {
 // ─── Place Order ──────────────────────────────────────────────────────────────
 export const placeOrder = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { shippingAddress, paymentMethod, items } = req.body as {
+    const { shippingAddress, paymentMethod, items, promoCode } = req.body as {
       shippingAddress: IOrderItem;
       paymentMethod: "razorpay" | "cod";
       items: OrderItemInput[];
+      promoCode?: string;
     };
 
     // Fetch all products and validate stock
@@ -51,9 +55,12 @@ export const placeOrder = catchAsync(
       } as IOrderItem);
     }
 
-    const taxAmount = parseFloat((itemsPrice * GST_RATE).toFixed(2));
-    const shippingPrice = itemsPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-    const totalAmount = parseFloat((itemsPrice + taxAmount + shippingPrice).toFixed(2));
+    const { promo, discountAmount } = await resolvePromoDiscount(promoCode, itemsPrice);
+
+    const taxableAmount = itemsPrice - discountAmount;
+    const taxAmount = parseFloat((taxableAmount * GST_RATE).toFixed(2));
+    const shippingPrice = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
+    const totalAmount = parseFloat((taxableAmount + taxAmount + shippingPrice).toFixed(2));
 
     const order = await Order.create({
       user: req.user!._id,
@@ -64,11 +71,18 @@ export const placeOrder = catchAsync(
         status: paymentMethod === "cod" ? "pending" : "pending",
       },
       itemsPrice,
+      promoCode: promo?.code,
+      discountAmount,
       taxAmount,
       shippingPrice,
       totalAmount,
       statusHistory: [{ status: "Pending", updatedAt: new Date() }],
     });
+
+    if (promo) {
+      promo.usedCount += 1;
+      await promo.save();
+    }
 
     // Reduce stock
     await Promise.all(
@@ -85,20 +99,40 @@ export const placeOrder = catchAsync(
       { items: [], totalItems: 0, totalPrice: 0 }
     );
 
-    // Send confirmation email
+    // Send confirmation email + WhatsApp invoice — both non-blocking, independent of each other
+    let invoicePdf: Buffer | undefined;
     try {
-      await sendEmail({
-        to: req.user!.email,
-        subject: `Order Confirmed — #${order._id}`,
-        html: orderConfirmationTemplate(
-          req.user!.name,
-          order._id.toString(),
-          orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
-          totalAmount
-        ),
-      });
-    } catch {
-      // Non-blocking — don't fail order if email fails
+      invoicePdf = await generateInvoicePDF(order, req.user!);
+    } catch (err) {
+      console.error("Invoice PDF generation failed:", err);
+    }
+
+    if (invoicePdf) {
+      try {
+        await sendEmail({
+          to: req.user!.email,
+          subject: `Order Confirmed — #${order._id}`,
+          html: orderConfirmationTemplate(
+            req.user!.name,
+            order._id.toString(),
+            orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            totalAmount
+          ),
+          attachments: [
+            { filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" },
+          ],
+        });
+      } catch (err) {
+        console.error("Order confirmation email failed:", err);
+      }
+
+      if (req.user!.phone) {
+        try {
+          await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+        } catch (err) {
+          console.error("WhatsApp invoice send failed:", err);
+        }
+      }
     }
 
     res.status(201).json({
@@ -194,25 +228,23 @@ export const cancelOrder = catchAsync(
   }
 );
 
-// ─── Get Invoice ──────────────────────────────────────────────────────────────
+// ─── Get Invoice (PDF download) ────────────────────────────────────────────────
 export const getInvoice = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("user", "name email");
     if (!order) return next(new AppError("Order not found.", 404));
 
     if (
-      order.user.toString() !== req.user!._id.toString() &&
+      order.user._id.toString() !== req.user!._id.toString() &&
       req.user!.role !== "admin"
     ) {
       return next(new AppError("Not authorized.", 403));
     }
 
-    // Return existing invoice URL or a placeholder
-    const invoiceUrl = order.invoiceUrl || `/api/orders/${order._id}/invoice-generate`;
+    const invoicePdf = await generateInvoicePDF(order, order.user as unknown as { name: string; email: string });
 
-    res.status(200).json({
-      success: true,
-      data: { invoiceUrl },
-    });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="Invoice-${order._id}.pdf"`);
+    res.status(200).send(invoicePdf);
   }
 );

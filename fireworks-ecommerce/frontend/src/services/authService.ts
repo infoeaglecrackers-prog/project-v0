@@ -7,6 +7,9 @@ export const authService = {
   login: (data: { email: string; password: string }) =>
     api.post("/auth/login", data),
 
+  googleAuth: (credential: string) =>
+    api.post("/auth/google", { credential }),
+
   logout: () => api.post("/auth/logout"),
 
   me: () => api.get("/auth/me"),
@@ -18,4 +21,8 @@ export const authService = {
 
   resetPassword: (token: string, password: string, confirmPassword: string) =>
     api.put(`/auth/reset-password/${token}`, { password, confirmPassword }),
+
+  sendEmailOtp: () => api.post("/auth/send-email-otp"),
+
+  verifyEmailOtp: (otp: string) => api.post("/auth/verify-email-otp", { otp }),
 };

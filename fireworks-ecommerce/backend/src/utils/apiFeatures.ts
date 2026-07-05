@@ -36,6 +36,11 @@ class ApiFeatures<T> {
     const removeFields = ["keyword", "page", "limit", "sort"];
     removeFields.forEach((k) => delete queryCopy[k]);
 
+    // Support comma-separated category IDs for multi-select: ?category=id1,id2
+    if (typeof queryCopy.category === "string" && queryCopy.category.includes(",")) {
+      queryCopy.category = { $in: queryCopy.category.split(",").map((s) => s.trim()) };
+    }
+
     // Convert price[gte] → $gte, etc.
     let queryStr = JSON.stringify(queryCopy);
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (key) => `$${key}`);

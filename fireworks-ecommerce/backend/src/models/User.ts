@@ -5,14 +5,19 @@ import crypto from "crypto";
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
+  password?: string;
   phone?: string;
   avatar: {
     public_id?: string;
     url: string;
   };
   role: "user" | "admin";
-  isVerified: boolean;
+  authProvider: "local" | "google";
+  googleId?: string;
+  isVerified: boolean; // email verified
+  phoneVerified: boolean; // reserved — requires an SMS gateway to actually deliver OTPs
+  emailOtp?: string;
+  emailOtpExpire?: Date;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   refreshToken?: string;
@@ -21,6 +26,7 @@ export interface IUser extends Document {
   // Methods
   comparePassword(enteredPassword: string): Promise<boolean>;
   getResetPasswordToken(): string;
+  getEmailOtp(): string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -42,7 +48,10 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: [
+        function (this: IUser) { return this.authProvider !== "google"; },
+        "Password is required",
+      ],
       minlength: [8, "Password must be at least 8 characters"],
       select: false,
     },
@@ -59,7 +68,21 @@ const UserSchema = new Schema<IUser>(
       enum: ["user", "admin"],
       default: "user",
     },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      select: false,
+    },
     isVerified: { type: Boolean, default: false },
+    phoneVerified: { type: Boolean, default: false },
+    emailOtp: { type: String, select: false },
+    emailOtpExpire: { type: Date, select: false },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },
     refreshToken: { type: String, select: false },
@@ -69,7 +92,7 @@ const UserSchema = new Schema<IUser>(
 
 // ─── Middleware: Hash password before save ───────────────────────────────────
 UserSchema.pre<IUser>("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.password || !this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -79,6 +102,7 @@ UserSchema.pre<IUser>("save", async function (next) {
 UserSchema.methods.comparePassword = async function (
   enteredPassword: string
 ): Promise<boolean> {
+  if (!this.password) return false; // Google-only accounts have no password
   return bcrypt.compare(enteredPassword, this.password);
 };
 
@@ -91,6 +115,14 @@ UserSchema.methods.getResetPasswordToken = function (): string {
     .digest("hex");
   this.resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
   return resetToken;
+};
+
+// ─── Method: Generate 6-digit email OTP ──────────────────────────────────────
+UserSchema.methods.getEmailOtp = function (): string {
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  this.emailOtp = crypto.createHash("sha256").update(otp).digest("hex");
+  this.emailOtpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  return otp;
 };
 
 const User: Model<IUser> = mongoose.model<IUser>("User", UserSchema);

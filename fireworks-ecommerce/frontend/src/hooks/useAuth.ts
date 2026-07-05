@@ -1,5 +1,5 @@
 import { useAppSelector, useAppDispatch } from "./useAppDispatch";
-import { loginUser, logoutUser, registerUser } from "../store/slices/authSlice";
+import { loginUser, logoutUser, registerUser, googleAuthUser } from "../store/slices/authSlice";
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
@@ -14,6 +14,7 @@ export const useAuth = () => {
     login: (email: string, password: string) => dispatch(loginUser({ email, password })),
     register: (data: { name: string; email: string; password: string; phone?: string }) =>
       dispatch(registerUser(data)),
+    googleAuth: (credential: string) => dispatch(googleAuthUser(credential)),
     logout: () => dispatch(logoutUser()),
   };
 };

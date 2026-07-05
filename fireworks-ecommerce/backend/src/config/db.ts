@@ -17,6 +17,8 @@ const connectDB = async (): Promise<void> => {
     const conn = await mongoose.connect(process.env.MONGO_URI as string, {
       autoCreate: true,
       autoIndex: true,
+      serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
+      socketTimeoutMS: 45000,
     });
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);

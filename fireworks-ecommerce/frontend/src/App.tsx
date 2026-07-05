@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, ToastBar, toast } from "react-hot-toast";
+import { X } from "lucide-react";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "./hooks/useAppDispatch";
 import { fetchMe, setToken } from "./store/slices/authSlice";
@@ -7,6 +8,7 @@ import { fetchCart } from "./store/slices/cartSlice";
 import { fetchWishlist } from "./store/slices/wishlistSlice";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import WhatsAppButton from "./components/common/WhatsAppButton";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -37,6 +39,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminPromoCodes from "./pages/admin/AdminPromoCodes";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -59,7 +62,27 @@ function AppContent() {
 
   return (
     <>
-      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { borderRadius: "12px", fontSize: "14px" } }} />
+      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { borderRadius: "12px", fontSize: "14px", paddingRight: "10px" } }}>
+        {(t) => (
+          <ToastBar toast={t}>
+            {({ icon, message }) => (
+              <>
+                {icon}
+                {message}
+                {t.type !== "loading" && (
+                  <button
+                    onClick={() => toast.dismiss(t.id)}
+                    aria-label="Dismiss"
+                    className="ml-2 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
       <Routes>
         {/* Admin routes */}
         <Route element={<ProtectedRoute adminOnly />}>
@@ -72,6 +95,7 @@ function AppContent() {
             <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
+            <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
           </Route>
         </Route>
 
@@ -102,6 +126,7 @@ function AppContent() {
                 </Routes>
               </div>
               <Footer />
+              <WhatsAppButton />
             </div>
           }
         />

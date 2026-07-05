@@ -8,6 +8,17 @@ import ApiFeatures from "../utils/apiFeatures";
 
 const PRODUCTS_PER_PAGE = 12;
 
+// If a discount % is given without an explicit original price, derive the
+// original price from it so the existing price-vs-originalPrice discount
+// badge (ProductCard/ProductDetailPage) reflects it automatically.
+const applyDiscountPercent = (body: Record<string, unknown>) => {
+  const discountPercent = Number(body.discountPercent);
+  const price = Number(body.price);
+  if (discountPercent > 0 && discountPercent < 100 && price > 0 && !body.originalPrice) {
+    body.originalPrice = Math.round(price / (1 - discountPercent / 100));
+  }
+};
+
 // ─── Get All Products ─────────────────────────────────────────────────────────
 export const getProducts = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
@@ -100,6 +111,7 @@ export const createProduct = catchAsync(
       ? req.body.tags.split(",").map((t: string) => t.trim())
       : [];
 
+    applyDiscountPercent(req.body);
     const product = await Product.create({ ...req.body, images, tags });
 
     res.status(201).json({
@@ -120,6 +132,7 @@ export const updateProduct = catchAsync(
       req.body.tags = req.body.tags.split(",").map((t: string) => t.trim());
     }
 
+    applyDiscountPercent(req.body);
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

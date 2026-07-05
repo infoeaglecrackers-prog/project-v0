@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Badge from "../common/Badge";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDate } from "../../utils/formatDate";
-import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS } from "../../utils/constants";
+import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "../../utils/constants";
 import type { IOrder } from "../../types";
 import { ChevronRight } from "lucide-react";
 
@@ -25,7 +25,7 @@ export default function OrderCard({ order }: Props) {
         </div>
         <div className="flex gap-2">
           <Badge label={order.orderStatus} color={statusColor as "green" | "red" | "yellow" | "blue" | "purple" | "gray"} />
-          <Badge label={payStatus} color={payColor as "green" | "red" | "yellow" | "gray"} />
+          <Badge label={PAYMENT_STATUS_LABELS[payStatus] || payStatus} color={payColor as "green" | "red" | "yellow" | "gray"} />
         </div>
       </div>
       <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-3">

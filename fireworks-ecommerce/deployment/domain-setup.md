@@ -7,7 +7,7 @@
 
 ```
 1. Go to: https://namecheap.com
-2. Search for your domain: crackersbazaar.com
+2. Search for your domain: eaglecrackers.com
 3. Add to cart
 4. Checkout:
    - Enable WhoisGuard (free privacy protection) ✅
@@ -18,7 +18,7 @@
 ```
 
 **India-specific .in domains (cheaper):**
-- `crackersbazaar.in` (~₹500/yr)
+- `eaglecrackers.in` (~₹500/yr)
 - `fireworksstore.in`
 - `buycrackers.in`
 
@@ -36,7 +36,7 @@
 ### Steps:
 ```
 1. Go to: https://cloudflare.com → Sign up (free)
-2. Add a Site → Enter: crackersbazaar.com
+2. Add a Site → Enter: eaglecrackers.com
 3. Select Free Plan
 4. Cloudflare scans and imports your existing DNS records
 5. Review records → Continue
@@ -79,7 +79,7 @@ Proxy:   ✅ Proxied
 
 Type:    CNAME
 Name:    @  (or use redirect rule)
-Target:  www.crackersbazaar.com
+Target:  www.eaglecrackers.com
 (Root domain redirect to www)
 ```
 
@@ -139,7 +139,7 @@ Automatic HTTPS Rewrites: ON ✅
 ### Verify SSL
 ```bash
 # Check SSL from terminal:
-curl -I https://www.crackersbazaar.com
+curl -I https://www.eaglecrackers.com
 
 # Should show: HTTP/2 200 and security headers
 # Check in browser: 🔒 padlock should appear
@@ -151,10 +151,10 @@ curl -I https://www.crackersbazaar.com
 
 ```
 1. Vercel Dashboard → Your Project → Settings → Domains
-2. Add Domain → Enter: crackersbazaar.com
-3. Add Domain → Enter: www.crackersbazaar.com
+2. Add Domain → Enter: eaglecrackers.com
+3. Add Domain → Enter: www.eaglecrackers.com
 4. Vercel verifies via DNS → Status: Valid ✅
-5. Your site is now live at: https://www.crackersbazaar.com
+5. Your site is now live at: https://www.eaglecrackers.com
 ```
 
 ---
@@ -163,11 +163,11 @@ curl -I https://www.crackersbazaar.com
 
 ```
 1. Render Dashboard → Your Service → Settings → Custom Domains
-2. Add Custom Domain: api.crackersbazaar.com
+2. Add Custom Domain: api.eaglecrackers.com
 3. Render gives you a CNAME record to add
 4. Already added in Cloudflare DNS ✅
 5. Render verifies → SSL auto-provisioned
-6. API now at: https://api.crackersbazaar.com
+6. API now at: https://api.eaglecrackers.com
 ```
 
 ---
@@ -179,8 +179,8 @@ After domain is set up, update your backend:
 // app.js
 app.use(cors({
   origin: [
-    "https://www.crackersbazaar.com",
-    "https://crackersbazaar.com",
+    "https://www.eaglecrackers.com",
+    "https://eaglecrackers.com",
     process.env.NODE_ENV === "development" ? "http://localhost:5173" : ""
   ].filter(Boolean),
   credentials: true,
@@ -196,15 +196,15 @@ app.use(cors({
 ### Option A: Free with Cloudflare Email Routing
 ```
 Cloudflare → Email → Email Routing
-Forward: orders@crackersbazaar.com → your gmail
-Forward: support@crackersbazaar.com → your gmail
+Forward: orders@eaglecrackers.com → your gmail
+Forward: support@eaglecrackers.com → your gmail
 
 You receive professional emails in your Gmail inbox.
 ```
 
 ### Option B: Google Workspace (Paid, ₹150/user/month)
 ```
-Get: admin@crackersbazaar.com
+Get: admin@eaglecrackers.com
 Send emails FROM your domain
 Better for business
 ```
@@ -215,8 +215,8 @@ Better for business
 
 ```bash
 # Check if DNS has propagated:
-nslookup crackersbazaar.com
-dig crackersbazaar.com
+nslookup eaglecrackers.com
+dig eaglecrackers.com
 
 # Online tools:
 # https://dnschecker.org
@@ -236,8 +236,8 @@ dig crackersbazaar.com
 ✅ Custom domain added in Vercel (frontend)
 ✅ Custom domain added in Render (backend API)
 ✅ CORS updated with production domain
-✅ Frontend .env updated: VITE_API_URL=https://api.crackersbazaar.com/api
-✅ Backend .env updated: CLIENT_URL=https://www.crackersbazaar.com
+✅ Frontend .env updated: VITE_API_URL=https://api.eaglecrackers.com/api
+✅ Backend .env updated: CLIENT_URL=https://www.eaglecrackers.com
 ✅ Redeployed both frontend and backend
 ✅ Test full flow: Register → Browse → Cart → Checkout → Payment
 ✅ Google Search Console domain verified
@@ -249,9 +249,9 @@ dig crackersbazaar.com
 ## 🎆 Your Site is LIVE!
 
 ```
-Frontend:   https://www.crackersbazaar.com
-Admin:      https://www.crackersbazaar.com/admin
-API:        https://api.crackersbazaar.com/api
+Frontend:   https://www.eaglecrackers.com
+Admin:      https://www.eaglecrackers.com/admin
+API:        https://api.eaglecrackers.com/api
 Database:   MongoDB Atlas (Cloud)
 Images:     Cloudinary CDN
 ```

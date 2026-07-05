@@ -1,15 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { fetchOrderById, cancelOrder } from "../store/slices/orderSlice";
+import { orderService } from "../services/orderService";
 import OrderTimeline from "../components/order/OrderTimeline";
 import OrderItemList from "../components/order/OrderItemList";
 import Badge from "../components/common/Badge";
 import Loader from "../components/common/Loader";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDate";
-import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS } from "../utils/constants";
-import { ChevronLeft, FileText } from "lucide-react";
+import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "../utils/constants";
+import { ChevronLeft, FileText, Loader2 } from "lucide-react";
 import type { IAddress } from "../types";
 import toast from "react-hot-toast";
 
@@ -18,6 +19,7 @@ export default function OrderDetailPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { current: order, loading, error } = useAppSelector((s) => s.orders);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -77,6 +79,25 @@ export default function OrderDetailPage() {
     if (cancelOrder.fulfilled.match(r)) toast.success("Order cancelled");
   };
 
+  const handleDownloadInvoice = async () => {
+    setDownloadingInvoice(true);
+    try {
+      const res = await orderService.downloadInvoice(order._id);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice-${order._id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Couldn't download invoice. Please try again.");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-dark mb-6">
@@ -90,7 +111,7 @@ export default function OrderDetailPage() {
         </div>
         <div className="flex gap-2">
           <Badge label={order.orderStatus} color={ORDER_STATUS_COLORS[order.orderStatus] as "green" | "red" | "yellow" | "blue" | "purple" | "gray"} />
-          <Badge label={paymentStatus} color={PAYMENT_STATUS_COLORS[paymentStatus] as "green" | "red" | "yellow" | "gray"} />
+          <Badge label={PAYMENT_STATUS_LABELS[paymentStatus] || paymentStatus} color={PAYMENT_STATUS_COLORS[paymentStatus] as "green" | "red" | "yellow" | "gray"} />
         </div>
       </div>
 
@@ -127,9 +148,14 @@ export default function OrderDetailPage() {
 
           {/* Actions */}
           <div className="flex gap-2">
-            <a href={`/api/orders/${order._id}/invoice`} target="_blank" className="btn-ghost flex-1 flex items-center justify-center gap-1 text-sm">
-              <FileText size={14} /> Invoice
-            </a>
+            <button
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
+              className="btn-ghost flex-1 flex items-center justify-center gap-1 text-sm disabled:opacity-60"
+            >
+              {downloadingInvoice ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+              Invoice
+            </button>
             {["Pending", "Confirmed", "pending", "confirmed"].includes(order.orderStatus) && (
               <button onClick={handleCancel} className="btn-ghost border-red-300 text-red-500 flex-1 text-sm">
                 Cancel

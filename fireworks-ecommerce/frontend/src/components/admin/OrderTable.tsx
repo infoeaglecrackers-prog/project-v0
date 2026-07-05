@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Badge from "../common/Badge";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDate } from "../../utils/formatDate";
-import { ORDER_STATUS_COLORS } from "../../utils/constants";
+import { ORDER_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "../../utils/constants";
 import type { IOrder } from "../../types";
 import { ChevronRight } from "lucide-react";
 
@@ -36,7 +36,10 @@ export default function OrderTable({ orders, onStatusChange }: Props) {
               <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{formatDate(order.createdAt)}</td>
               <td className="py-3 px-4 font-medium dark:text-gray-200">{formatCurrency(order.totalAmount)}</td>
               <td className="py-3 px-4">
-                  <Badge label={order.paymentInfo?.status || order.paymentStatus} color={(order.paymentInfo?.status || order.paymentStatus) === "paid" ? "green" : "yellow"} />
+                  <Badge
+                    label={PAYMENT_STATUS_LABELS[order.paymentInfo?.status || order.paymentStatus] || order.paymentInfo?.status || order.paymentStatus}
+                    color={(order.paymentInfo?.status || order.paymentStatus) === "paid" ? "green" : "yellow"}
+                  />
               </td>
               <td className="py-3 px-4">
                 {onStatusChange ? (

@@ -1,12 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { productService } from "../../services/productService";
-import type { IProduct, IProductFilters } from "../../types";
+import { categoryService } from "../../services/categoryService";
+import type { IProduct, ICategory, IProductFilters } from "../../types";
 
 interface ProductState {
   products: IProduct[];
   featured: IProduct[];
   bestSellers: IProduct[];
   current: IProduct | null;
+  categories: ICategory[];
   loading: boolean;
   error: string | null;
   pagination: { total: number; page: number; pages: number; limit: number; totalPages: number; currentPage: number } | null;
@@ -18,6 +20,7 @@ const initialState: ProductState = {
   featured: [],
   bestSellers: [],
   current: null,
+  categories: [],
   loading: false,
   error: null,
   pagination: null,
@@ -60,6 +63,16 @@ export const fetchFeatured = createAsyncThunk("products/featured", async (_, { r
   }
 });
 
+export const fetchCategories = createAsyncThunk("products/fetchCategories", async (_, { rejectWithValue }) => {
+  try {
+    const res = await categoryService.getAll();
+    return res.data.data?.categories ?? res.data.data ?? [];
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } };
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch categories");
+  }
+});
+
 export const fetchBestSellers = createAsyncThunk("products/bestSellers", async (_, { rejectWithValue }) => {
   try {
     const res = await productService.getBestSellers();
@@ -74,7 +87,7 @@ const productSlice = createSlice({
   name: "products",
   initialState,
   reducers: {
-    setFilters(state, action) { state.filters = { ...state.filters, ...action.payload }; },
+    setFilters(state, action) { state.filters = action.payload; },
     clearFilters(state) { state.filters = {}; },
     clearCurrentProduct(state) { state.current = null; },
   },
@@ -108,7 +121,8 @@ const productSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(fetchFeatured.fulfilled, (state, action) => { state.featured = action.payload; })
-      .addCase(fetchBestSellers.fulfilled, (state, action) => { state.bestSellers = action.payload; });
+      .addCase(fetchBestSellers.fulfilled, (state, action) => { state.bestSellers = action.payload; })
+      .addCase(fetchCategories.fulfilled, (state, action) => { state.categories = action.payload; });
   },
 });
 

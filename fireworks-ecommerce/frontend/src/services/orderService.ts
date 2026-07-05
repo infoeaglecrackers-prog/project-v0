@@ -10,5 +10,6 @@ export const orderService = {
   cancel: (id: string, reason: string) =>
     api.put(`/orders/${id}/cancel`, { reason }),
 
-  getInvoice: (id: string) => api.get(`/orders/${id}/invoice`),
+  downloadInvoice: (id: string) =>
+    api.get(`/orders/${id}/invoice`, { responseType: "blob" }),
 };

@@ -172,7 +172,7 @@ Follow this order — each frame size 1440×1024.
 ---
 
 ## 9. Example Content (copy-ready)
-- Logo text: Crackers Bazaar
+- Logo text: Eagle Crackers
 - Hero H1: "Celebrate with Brightest Crackers"
 - Hero subtext: "Safe, certified crackers for every festival — delivered fast"
 - CTA: "Shop Now"

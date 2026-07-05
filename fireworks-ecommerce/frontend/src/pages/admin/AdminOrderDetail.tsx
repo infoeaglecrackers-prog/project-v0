@@ -11,6 +11,7 @@ import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDateTime } from "../../utils/formatDate";
 import { ChevronLeft } from "lucide-react";
 import type { IAddress } from "../../types";
+import { PAYMENT_STATUS_LABELS } from "../../utils/constants";
 import toast from "react-hot-toast";
 
 // Use backend-approved status values (capitalized)
@@ -89,7 +90,7 @@ export default function AdminOrderDetail() {
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
-          <Badge label={paymentStatus} color={paymentStatus === "paid" ? "green" : "yellow"} />
+          <Badge label={PAYMENT_STATUS_LABELS[paymentStatus] || paymentStatus} color={paymentStatus === "paid" ? "green" : "yellow"} />
         </div>
       </div>
 

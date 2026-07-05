@@ -15,6 +15,7 @@ type FormData = {
   description: string;
   price: number;
   originalPrice?: number;
+  discountPercent?: number;
   stock: number;
   category: string;
   isFeatured: boolean;
@@ -29,6 +30,7 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
       description: initial?.description || "",
       price: initial?.price || 0,
       originalPrice: initial?.originalPrice || undefined,
+      discountPercent: initial?.discountPercent || undefined,
       stock: initial?.stock || 0,
       category: (initial?.category as unknown as { _id: string })?._id || "",
       isFeatured: initial?.isFeatured || false,
@@ -57,8 +59,19 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Original Price (₹)</label>
-          <input type="number" {...register("originalPrice")} className="input-field mt-1" />
+          <input type="number" {...register("originalPrice")} className="input-field mt-1" placeholder="Optional — for a fixed MRP" />
         </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Discount %</label>
+        <input
+          type="number"
+          {...register("discountPercent", { min: 0, max: 99 })}
+          className="input-field mt-1"
+          placeholder="e.g. 20 — auto-calculates Original Price if left blank above"
+        />
+        {errors.discountPercent && <p className="text-xs text-red-500 mt-1">Must be between 0 and 99</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

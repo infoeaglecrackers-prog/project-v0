@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Tag, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Tag, TicketPercent, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const links = [
@@ -8,6 +8,7 @@ const links = [
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/categories", label: "Categories", icon: Tag },
+  { to: "/admin/promo-codes", label: "Promo Codes", icon: TicketPercent },
 ];
 
 export default function AdminLayout() {

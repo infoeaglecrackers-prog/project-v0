@@ -23,6 +23,7 @@ import paymentRoutes from "./routes/payment.routes";
 import reviewRoutes from "./routes/review.routes";
 import addressRoutes from "./routes/address.routes";
 import adminRoutes from "./routes/admin.routes";
+import promoRoutes from "./routes/promo.routes";
 
 // Load env vars
 dotenv.config();
@@ -93,6 +94,7 @@ app.use("/api/payment",    paymentRoutes);
 app.use("/api/reviews",    reviewRoutes);
 app.use("/api/addresses",  addressRoutes);
 app.use("/api/admin",      adminRoutes);
+app.use("/api/promos",     promoRoutes);
 
 // ─── 404 & Error Handler ─────────────────────────────────────────────────────
 app.use(notFound);

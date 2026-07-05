@@ -43,6 +43,7 @@ export default function AdminAddProduct() {
       formData.append("description", data.description as string);
       formData.append("price", data.price as string);
       if (data.originalPrice) formData.append("originalPrice", data.originalPrice as string);
+      if (data.discountPercent) formData.append("discountPercent", data.discountPercent as string);
       formData.append("stock", data.stock as string);
       formData.append("category", data.category as string);
       formData.append("isFeatured", data.isFeatured as string);
@@ -57,7 +58,7 @@ export default function AdminAddProduct() {
         formData.append("images", file);
       });
 
-      const res = await productService.create(formData);
+      await productService.create(formData);
       toast.success("Product created!");
       navigate("/admin/products");
     } catch (err: unknown) {

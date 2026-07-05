@@ -7,7 +7,7 @@ import AddressList from "../components/checkout/AddressList";
 import Modal from "../components/common/Modal";
 import type { IAddress } from "../types";
 import toast from "react-hot-toast";
-import { User, Lock, MapPin, Upload, X } from "lucide-react";
+import { User, Lock, MapPin, Upload } from "lucide-react";
 
 type Tab = "profile" | "password" | "addresses";
 

@@ -10,11 +10,26 @@ import OrderReview from "../components/checkout/OrderReview";
 import Modal from "../components/common/Modal";
 import { addressService } from "../services/addressService";
 import { paymentService } from "../services/paymentService";
+import { promoService } from "../services/promoService";
 import type { IAddress } from "../types";
 import toast from "react-hot-toast";
 import { useCart } from "../hooks/useCart";
 
 const STEPS = ["Address", "Payment", "Review"];
+
+// Mirrors backend/src/controllers/order.controller.ts so the checkout preview
+// (and the amount actually sent to Razorpay) matches what gets stored server-side.
+const GST_RATE = 0.18;
+const FREE_SHIPPING_THRESHOLD = 999;
+const SHIPPING_CHARGE = 99;
+
+// Restricts which tabs Razorpay's checkout shows, so the method picked in step 2 actually matters
+// instead of every option opening the same all-methods Razorpay screen.
+const RAZORPAY_METHOD: Record<string, Record<string, boolean>> = {
+  razorpay_card: { card: true, netbanking: false, upi: false, wallet: false, paylater: false },
+  razorpay_upi: { card: false, netbanking: false, upi: true, wallet: false, paylater: false },
+  razorpay_nb: { card: false, netbanking: true, upi: false, wallet: false, paylater: false },
+};
 
 declare global { interface Window { Razorpay: new (options: unknown) => { open: () => void }; } }
 
@@ -29,6 +44,38 @@ export default function CheckoutPage() {
   const [payMethod, setPayMethod] = useState("razorpay_card");
   const [addrModal, setAddrModal] = useState(false);
   const [editAddr, setEditAddr] = useState<IAddress | null>(null);
+
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPercent: number; discountAmount: number } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const subtotal = cart?.totalPrice || 0;
+  const discountAmount = appliedPromo?.discountAmount || 0;
+  const taxableAmount = subtotal - discountAmount;
+  const shipping = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
+  const tax = Math.round(taxableAmount * GST_RATE * 100) / 100;
+  const total = Math.round((taxableAmount + tax + shipping) * 100) / 100;
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    try {
+      const { data } = await promoService.validate(promoInput.trim(), subtotal);
+      setAppliedPromo(data.data);
+      toast.success(`Promo applied — ${data.data.discountPercent}% off!`);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Invalid promo code");
+      setAppliedPromo(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoInput("");
+  };
 
   useEffect(() => {
     dispatch(fetchCart());
@@ -73,43 +120,48 @@ export default function CheckoutPage() {
     if (!isCod) {
       // Razorpay flow
       try {
-        const total = cart.totalPrice;
         const { data } = await paymentService.createRazorpayOrder(total);
+        const { razorpayOrder, key } = data.data;
         const rzpOptions = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: data.order.amount,
+          key,
+          amount: razorpayOrder.amount,
           currency: "INR",
-          order_id: data.order.id,
-          name: "Crackers Bazaar",
+          order_id: razorpayOrder.id,
+          name: "Eagle Crackers",
           description: "Fireworks Order",
           handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-            const verified = await paymentService.verifyPayment({
-              ...response,
-              orderId: response.razorpay_order_id,
-            });
-            if (verified.data.success) {
-              const result = await dispatch(createOrder({
-                items,
+            try {
+              const verified = await paymentService.verifyPayment({
+                ...response,
                 shippingAddress: addr,
-                paymentMethod: "razorpay",
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-              }));
-              if (createOrder.fulfilled.match(result)) {
+                items,
+                promoCode: appliedPromo?.code,
+              });
+              if (verified.data.success) {
                 toast.success("Order placed!");
-                navigate(`/orders/${(result.payload as { _id: string })._id}`);
+                dispatch(fetchCart());
+                navigate(`/orders/${verified.data.data.orderId}`);
               }
+            } catch {
+              toast.error("Payment verification failed. Contact support if money was deducted.");
             }
           },
           prefill: { name: addr.fullName, contact: addr.phone },
-          theme: { color: "#FF4500" },
+          theme: { color: "#c9184a" },
+          method: RAZORPAY_METHOD[payMethod],
         };
+        if (!window.Razorpay) {
+          toast.error("Payment gateway failed to load. Check your internet connection or ad-blocker and try again.");
+          return;
+        }
         const rzp = new window.Razorpay(rzpOptions);
         rzp.open();
-      } catch { toast.error("Payment failed"); }
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
+        toast.error(error.response?.data?.message || "Payment failed");
+      }
     } else {
-      const result = await dispatch(createOrder({ items, shippingAddress: addr, paymentMethod: "cod" }));
+      const result = await dispatch(createOrder({ items, shippingAddress: addr, paymentMethod: "cod", promoCode: appliedPromo?.code }));
       if (createOrder.fulfilled.match(result)) {
         toast.success("Order placed!");
         navigate(`/orders/${(result.payload as { _id: string })._id}`);
@@ -151,7 +203,14 @@ export default function CheckoutPage() {
             />
           )}
           {step === 1 && <PaymentOptions selected={payMethod} onSelect={setPayMethod} />}
-          {step === 2 && selectedAddrObj && <OrderReview address={selectedAddrObj} paymentMethod={payMethod} />}
+          {step === 2 && selectedAddrObj && (
+            <OrderReview
+              address={selectedAddrObj}
+              paymentMethod={payMethod}
+              pricing={{ subtotal, discountAmount, shipping, tax, total }}
+              appliedPromo={appliedPromo}
+            />
+          )}
 
           <div className="flex gap-3 mt-6">
             {step > 0 && (
@@ -175,7 +234,18 @@ export default function CheckoutPage() {
 
         {selectedAddrObj && cart && (
           <div className="space-y-4">
-            <OrderReview address={selectedAddrObj} paymentMethod={payMethod} />
+            <OrderReview
+              address={selectedAddrObj}
+              paymentMethod={payMethod}
+              pricing={{ subtotal, discountAmount, shipping, tax, total }}
+              appliedPromo={appliedPromo}
+              showPromoInput
+              promoInput={promoInput}
+              onPromoInputChange={setPromoInput}
+              onApplyPromo={handleApplyPromo}
+              onRemovePromo={handleRemovePromo}
+              promoLoading={promoLoading}
+            />
           </div>
         )}
       </div>
