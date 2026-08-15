@@ -30,6 +30,7 @@ const SHIPPING_CHARGE = 99;
 const RAZORPAY_METHOD: Record<string, Record<string, boolean>> = {
   razorpay_card: { card: true, netbanking: false, upi: false, wallet: false, paylater: false },
   razorpay_upi: { card: false, netbanking: false, upi: true, wallet: false, paylater: false },
+  razorpay_gpay: { card: false, netbanking: false, upi: true, wallet: false, paylater: false },
   razorpay_nb: { card: false, netbanking: true, upi: false, wallet: false, paylater: false },
 };
 
@@ -166,8 +167,12 @@ export default function CheckoutPage() {
               toast.error("Payment verification failed. Contact support if money was deducted.");
             }
           },
-          prefill: { name: addr.fullName, contact: addr.phone },          theme: { color: "#c9184a" },
+          prefill: { name: addr.fullName, contact: addr.phone },
+          theme: { color: "#c9184a" },
           method: RAZORPAY_METHOD[payMethod],
+          config: payMethod === "razorpay_gpay"
+            ? { display: { blocks: { gpay: { name: "Google Pay", instruments: [{ method: "upi", flows: ["intent"], apps: ["google_pay"] }] } }, sequence: ["block.gpay"], preferences: { show_default_blocks: false } } }
+            : undefined,
         };
         if (!window.Razorpay) {
           toast.error("Payment gateway failed to load. Check your internet connection or ad-blocker and try again.");
