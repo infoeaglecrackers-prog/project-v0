@@ -13,10 +13,12 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const BRAND = process.env.FROM_NAME || "Eagle Crackers";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict" as const,
+  secure: isProduction,
+  sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
