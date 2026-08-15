@@ -148,7 +148,7 @@ export interface IAddress {
 // ─── Order ────────────────────────────────────────────────────────────────────
 export type OrderStatus = "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled" | "Refunded";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
-export type PaymentMethod = "razorpay" | "cod";
+export type PaymentMethod = "razorpay" | "cod" | "pay_later";
 
 export interface IOrderItem {
   _id?: string;
@@ -187,6 +187,7 @@ export interface IOrder {
   deliveredAt?: string;
   cancelledAt?: string;
   cancelReason?: string;
+  paymentDueDate?: string;
   createdAt: string;
 }
 

@@ -4,6 +4,8 @@ import {
   createRazorpayOrder,
   verifyPayment,
   razorpayWebhook,
+  createRazorpayOrderForExisting,
+  verifyPayForOrder,
 } from "../controllers/payment.controller";
 import { protect } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
@@ -40,6 +42,22 @@ router.post(
   ],
   validate,
   verifyPayment
+);
+
+// ─── Pay-Later Routes ─────────────────────────────────────────────────────────
+// Create a Razorpay order for an existing pay-later order
+router.post("/pay-order/:orderId", createRazorpayOrderForExisting);
+
+// Verify and confirm payment for a pay-later order
+router.post(
+  "/pay-order/:orderId/verify",
+  [
+    body("razorpay_order_id").notEmpty().withMessage("Razorpay order ID is required"),
+    body("razorpay_payment_id").notEmpty().withMessage("Payment ID is required"),
+    body("razorpay_signature").notEmpty().withMessage("Signature is required"),
+  ],
+  validate,
+  verifyPayForOrder
 );
 
 export default router;

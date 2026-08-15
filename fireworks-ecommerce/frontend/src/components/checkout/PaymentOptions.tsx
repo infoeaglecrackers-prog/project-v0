@@ -1,4 +1,4 @@
-import { CreditCard, Smartphone, Building2, Wallet } from "lucide-react";
+import { CreditCard, Smartphone, Building2, Wallet, Clock } from "lucide-react";
 
 interface Props {
   selected: string;
@@ -10,6 +10,7 @@ const methods = [
   { id: "razorpay_upi", label: "UPI", icon: Smartphone, desc: "GPay, PhonePe, Paytm" },
   { id: "razorpay_nb", label: "Net Banking", icon: Building2, desc: "All major banks" },
   { id: "cod", label: "Cash on Delivery", icon: Wallet, desc: "Pay when you receive" },
+  { id: "pay_later", label: "Pay Later", icon: Clock, desc: "Place now, pay within 2 days — packing starts after payment" },
 ];
 
 export default function PaymentOptions({ selected, onSelect }: Props) {
@@ -32,10 +33,18 @@ export default function PaymentOptions({ selected, onSelect }: Props) {
               <p className="font-medium text-dark dark:text-gray-100 text-sm">{m.label}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">{m.desc}</p>
             </div>
-            <div className={`w-4 h-4 rounded-full border-2 ${selected === m.id ? "border-primary bg-primary" : "border-gray-300 dark:border-gray-500"}`} />
+            {m.id === "pay_later" && (
+              <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium">2-Day Window</span>
+            )}
+            <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${selected === m.id ? "border-primary bg-primary" : "border-gray-300 dark:border-gray-500"}`} />
           </div>
         ))}
       </div>
+      {selected === "pay_later" && (
+        <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg text-sm text-orange-700 dark:text-orange-300">
+          ⏰ <strong>Pay Later Notice:</strong> Your order will be reserved but packing will begin <strong>only after payment is received</strong>. You have 2 days from order placement to complete payment.
+        </div>
+      )}
     </div>
   );
 }

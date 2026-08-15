@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Tag, TicketPercent, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Tag, TicketPercent, MapPin, Mail, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const links = [
@@ -9,6 +9,8 @@ const links = [
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/categories", label: "Categories", icon: Tag },
   { to: "/admin/promo-codes", label: "Promo Codes", icon: TicketPercent },
+  { to: "/admin/drop-points", label: "Drop Points", icon: MapPin },
+  { to: "/admin/mail", label: "Mail Panel", icon: Mail },
 ];
 
 export default function AdminLayout() {

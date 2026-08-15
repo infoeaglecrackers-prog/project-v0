@@ -1,5 +1,6 @@
-import { Tag, X } from "lucide-react";
+import { Tag, X, Package } from "lucide-react";
 import type { IAddress } from "../../types";
+import type { IDropPoint } from "../../services/dropPointService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { useCart } from "../../hooks/useCart";
 
@@ -19,6 +20,7 @@ interface AppliedPromo {
 
 interface Props {
   address: IAddress;
+  dropPoint?: IDropPoint | null;
   paymentMethod: string;
   pricing: Pricing;
   appliedPromo: AppliedPromo | null;
@@ -31,7 +33,7 @@ interface Props {
 }
 
 export default function OrderReview({
-  address, paymentMethod, pricing, appliedPromo,
+  address, dropPoint, paymentMethod, pricing, appliedPromo,
   showPromoInput, promoInput, onPromoInputChange, onApplyPromo, onRemovePromo, promoLoading,
 }: Props) {
   const { cart } = useCart();
@@ -57,11 +59,22 @@ export default function OrderReview({
 
       <hr className="border-gray-100 dark:border-gray-700" />
 
-      {/* Address */}
+      {/* Address / Drop point */}
       <div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Delivering to</p>
-        <p className="text-sm font-medium dark:text-gray-200">{address.fullName}</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{address.addressLine1}, {address.city}, {address.state} {address.pincode}</p>
+        {dropPoint ? (
+          <>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 flex items-center gap-1"><Package size={11} /> Pickup at Drop Point</p>
+            <p className="text-sm font-medium dark:text-gray-200">{dropPoint.name}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{dropPoint.addressLine1}, {dropPoint.city} – {dropPoint.pincode}</p>
+            {dropPoint.workingHours && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">🕐 {dropPoint.workingHours}</p>}
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Delivering to</p>
+            <p className="text-sm font-medium dark:text-gray-200">{address.fullName}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{address.addressLine1}, {address.city}, {address.state} {address.pincode}</p>
+          </>
+        )}
       </div>
 
       <hr className="border-gray-100 dark:border-gray-700" />

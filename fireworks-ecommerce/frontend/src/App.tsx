@@ -40,6 +40,8 @@ import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminPromoCodes from "./pages/admin/AdminPromoCodes";
+import AdminDropPoints from "./pages/admin/AdminDropPoints";
+import AdminMailPanel from "./pages/admin/AdminMailPanel";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -96,6 +98,8 @@ function AppContent() {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
             <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
+            <Route path="/admin/drop-points" element={<AdminDropPoints />} />
+            <Route path="/admin/mail" element={<AdminMailPanel />} />
           </Route>
         </Route>
 

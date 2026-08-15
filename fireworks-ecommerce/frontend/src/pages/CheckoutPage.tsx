@@ -7,11 +7,13 @@ import AddressList from "../components/checkout/AddressList";
 import AddressForm from "../components/checkout/AddressForm";
 import PaymentOptions from "../components/checkout/PaymentOptions";
 import OrderReview from "../components/checkout/OrderReview";
+import DropPointSelector from "../components/checkout/DropPointSelector";
 import Modal from "../components/common/Modal";
 import { addressService } from "../services/addressService";
 import { paymentService } from "../services/paymentService";
 import { promoService } from "../services/promoService";
 import type { IAddress } from "../types";
+import type { IDropPoint } from "../services/dropPointService";
 import toast from "react-hot-toast";
 import { useCart } from "../hooks/useCart";
 
@@ -44,6 +46,7 @@ export default function CheckoutPage() {
   const [payMethod, setPayMethod] = useState("razorpay_card");
   const [addrModal, setAddrModal] = useState(false);
   const [editAddr, setEditAddr] = useState<IAddress | null>(null);
+  const [selectedDropPoint, setSelectedDropPoint] = useState<IDropPoint | null>(null);
 
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPercent: number; discountAmount: number } | null>(null);
@@ -109,6 +112,22 @@ export default function CheckoutPage() {
     if (!selectedAddr || !cart) return;
     const addr = addresses.find((a) => a._id === selectedAddr)!;
 
+    // If a drop point is selected, build a shipping address from it
+    const shippingAddress = selectedDropPoint
+      ? {
+          fullName: addr.fullName,
+          phone: addr.phone,
+          addressLine1: selectedDropPoint.addressLine1,
+          addressLine2: selectedDropPoint.addressLine2 || selectedDropPoint.name,
+          city: selectedDropPoint.city,
+          state: selectedDropPoint.state,
+          pincode: selectedDropPoint.pincode,
+          country: "India",
+          isDropPoint: true,
+          dropPointName: selectedDropPoint.name,
+        }
+      : addr;
+
     // Build items array required by backend
     const items = cart.items.map((item) => ({
       productId: typeof item.product === "object" ? item.product._id : item.product,
@@ -116,8 +135,9 @@ export default function CheckoutPage() {
     }));
 
     const isCod = payMethod === "cod";
+    const isPayLater = payMethod === "pay_later";
 
-    if (!isCod) {
+    if (!isCod && !isPayLater) {
       // Razorpay flow
       try {
         const { data } = await paymentService.createRazorpayOrder(total);
@@ -133,7 +153,7 @@ export default function CheckoutPage() {
             try {
               const verified = await paymentService.verifyPayment({
                 ...response,
-                shippingAddress: addr,
+                shippingAddress,
                 items,
                 promoCode: appliedPromo?.code,
               });
@@ -146,8 +166,7 @@ export default function CheckoutPage() {
               toast.error("Payment verification failed. Contact support if money was deducted.");
             }
           },
-          prefill: { name: addr.fullName, contact: addr.phone },
-          theme: { color: "#c9184a" },
+          prefill: { name: addr.fullName, contact: addr.phone },          theme: { color: "#c9184a" },
           method: RAZORPAY_METHOD[payMethod],
         };
         if (!window.Razorpay) {
@@ -161,9 +180,15 @@ export default function CheckoutPage() {
         toast.error(error.response?.data?.message || "Payment failed");
       }
     } else {
-      const result = await dispatch(createOrder({ items, shippingAddress: addr, paymentMethod: "cod", promoCode: appliedPromo?.code }));
+      // COD or Pay Later — both go through createOrder
+      const method = isPayLater ? "pay_later" : "cod";
+      const result = await dispatch(createOrder({ items, shippingAddress, paymentMethod: method as "cod" | "pay_later", promoCode: appliedPromo?.code }));
       if (createOrder.fulfilled.match(result)) {
-        toast.success("Order placed!");
+        if (isPayLater) {
+          toast.success("Order placed! Complete payment within 2 days to start packing.");
+        } else {
+          toast.success("Order placed!");
+        }
         navigate(`/orders/${(result.payload as { _id: string })._id}`);
       } else {
         toast.error("Order failed");
@@ -193,19 +218,34 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 card p-6">
           {step === 0 && (
-            <AddressList
-              addresses={addresses}
-              selected={selectedAddr}
-              onSelect={setSelectedAddr}
-              onAdd={() => { setEditAddr(null); setAddrModal(true); }}
-              onEdit={(a) => { setEditAddr(a); setAddrModal(true); }}
-              onDelete={handleDeleteAddr}
-            />
+            <>
+              <AddressList
+                addresses={addresses}
+                selected={selectedAddr}
+                onSelect={(id) => {
+                  setSelectedAddr(id);
+                  setSelectedDropPoint(null); // reset drop point when address changes
+                }}
+                onAdd={() => { setEditAddr(null); setAddrModal(true); }}
+                onEdit={(a) => { setEditAddr(a); setAddrModal(true); }}
+                onDelete={handleDeleteAddr}
+              />
+              {/* Drop point selector — shows after an address is chosen, uses its pincode/city for smart ranking */}
+              {selectedAddr && (
+                <DropPointSelector
+                  selectedId={selectedDropPoint?._id || null}
+                  onSelect={setSelectedDropPoint}
+                  pincode={addresses.find((a) => a._id === selectedAddr)?.pincode}
+                  city={addresses.find((a) => a._id === selectedAddr)?.city}
+                />
+              )}
+            </>
           )}
           {step === 1 && <PaymentOptions selected={payMethod} onSelect={setPayMethod} />}
           {step === 2 && selectedAddrObj && (
             <OrderReview
               address={selectedAddrObj}
+              dropPoint={selectedDropPoint}
               paymentMethod={payMethod}
               pricing={{ subtotal, discountAmount, shipping, tax, total }}
               appliedPromo={appliedPromo}

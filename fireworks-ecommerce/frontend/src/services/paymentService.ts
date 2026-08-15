@@ -12,4 +12,15 @@ export const paymentService = {
     items: { productId: string; quantity: number }[];
     promoCode?: string;
   }) => api.post("/payment/verify", data),
+
+  // Pay-Later: create a Razorpay order for an existing AwaitingPayment order
+  createRazorpayOrderForExisting: (orderId: string) =>
+    api.post(`/payment/pay-order/${orderId}`),
+
+  // Pay-Later: verify payment and move order to Processing
+  verifyPayForOrder: (orderId: string, data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => api.post(`/payment/pay-order/${orderId}/verify`, data),
 };

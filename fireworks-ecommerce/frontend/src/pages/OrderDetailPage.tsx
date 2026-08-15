@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { fetchOrderById, cancelOrder } from "../store/slices/orderSlice";
 import { orderService } from "../services/orderService";
+import { paymentService } from "../services/paymentService";
 import OrderTimeline from "../components/order/OrderTimeline";
 import OrderItemList from "../components/order/OrderItemList";
 import Badge from "../components/common/Badge";
@@ -10,9 +11,11 @@ import Loader from "../components/common/Loader";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDate";
 import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "../utils/constants";
-import { ChevronLeft, FileText, Loader2 } from "lucide-react";
+import { ChevronLeft, FileText, Loader2, Clock } from "lucide-react";
 import type { IAddress } from "../types";
 import toast from "react-hot-toast";
+
+declare global { interface Window { Razorpay: new (options: unknown) => { open: () => void }; } }
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +23,7 @@ export default function OrderDetailPage() {
   const navigate = useNavigate();
   const { current: order, loading, error } = useAppSelector((s) => s.orders);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [payingNow, setPayingNow] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -79,6 +83,44 @@ export default function OrderDetailPage() {
     if (cancelOrder.fulfilled.match(r)) toast.success("Order cancelled");
   };
 
+  const handlePayNow = async () => {
+    if (!order) return;
+    setPayingNow(true);
+    try {
+      const { data } = await paymentService.createRazorpayOrderForExisting(order._id);
+      const { razorpayOrder, key } = data.data;
+      if (!window.Razorpay) {
+        toast.error("Payment gateway failed to load. Check your internet connection and try again.");
+        return;
+      }
+      const rzp = new window.Razorpay({
+        key,
+        amount: razorpayOrder.amount,
+        currency: "INR",
+        order_id: razorpayOrder.id,
+        name: "Eagle Crackers",
+        description: `Payment for Order #${order._id.slice(-8).toUpperCase()}`,
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          try {
+            await paymentService.verifyPayForOrder(order._id, response);
+            toast.success("Payment received! Your order is now being packed 🎉");
+            dispatch(fetchOrderById(order._id));
+          } catch {
+            toast.error("Payment verification failed. Contact support if money was deducted.");
+          }
+        },
+        prefill: { name: (order.shippingAddress as unknown as IAddress)?.fullName, contact: (order.shippingAddress as unknown as IAddress)?.phone },
+        theme: { color: "#c9184a" },
+      });
+      rzp.open();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to initiate payment");
+    } finally {
+      setPayingNow(false);
+    }
+  };
+
   const handleDownloadInvoice = async () => {
     setDownloadingInvoice(true);
     try {
@@ -119,6 +161,35 @@ export default function OrderDetailPage() {
       <div className="card p-6 mb-6 overflow-x-auto">
         <OrderTimeline status={order.orderStatus} />
       </div>
+
+      {/* Pay Later Banner */}
+      {order.orderStatus === "AwaitingPayment" && (
+        <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-700 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Clock size={20} className="text-orange-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-orange-700 dark:text-orange-300">Payment Pending</p>
+              <p className="text-sm text-orange-600 dark:text-orange-400 mt-0.5">
+                Complete payment by{" "}
+                <strong>
+                  {order.paymentDueDate
+                    ? new Date(order.paymentDueDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+                    : "2 days from order date"}
+                </strong>{" "}
+                to start packing. Orders without payment will be cancelled automatically.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handlePayNow}
+            disabled={payingNow}
+            className="btn-primary flex-shrink-0 flex items-center gap-2 disabled:opacity-60"
+          >
+            {payingNow ? <Loader2 size={15} className="animate-spin" /> : null}
+            {payingNow ? "Processing…" : "Pay Now →"}
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Items */}

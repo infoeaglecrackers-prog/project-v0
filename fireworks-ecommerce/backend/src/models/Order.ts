@@ -2,6 +2,7 @@ import mongoose, { Document, Schema, Model, Types } from "mongoose";
 
 export type OrderStatus =
   | "Pending"
+  | "AwaitingPayment"
   | "Processing"
   | "Shipped"
   | "Delivered"
@@ -9,7 +10,7 @@ export type OrderStatus =
   | "Refunded";
 
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
-export type PaymentMethod = "razorpay" | "cod";
+export type PaymentMethod = "razorpay" | "cod" | "pay_later";
 
 export interface IOrderItem {
   product: Types.ObjectId;
@@ -63,6 +64,7 @@ export interface IOrder extends Document {
   cancelledAt?: Date;
   cancelReason?: string;
   invoiceUrl?: string;
+  paymentDueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,7 +98,7 @@ const OrderSchema = new Schema<IOrder>(
     paymentInfo: {
       method: {
         type: String,
-        enum: ["razorpay", "cod"],
+        enum: ["razorpay", "cod", "pay_later"],
         required: [true, "Payment method is required"],
       },
       razorpay_order_id: { type: String },
@@ -117,7 +119,7 @@ const OrderSchema = new Schema<IOrder>(
     totalAmount: { type: Number, required: true },
     orderStatus: {
       type: String,
-      enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"],
+      enum: ["Pending", "AwaitingPayment", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"],
       default: "Pending",
     },
     statusHistory: [
@@ -132,6 +134,7 @@ const OrderSchema = new Schema<IOrder>(
     cancelledAt: { type: Date },
     cancelReason: { type: String },
     invoiceUrl: { type: String },
+    paymentDueDate: { type: Date },
   },
   { timestamps: true }
 );

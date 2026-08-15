@@ -203,6 +203,126 @@ export const verifyPayment = catchAsync(
   }
 );
 
+// ─── Create Razorpay Order for Pay-Later Order ────────────────────────────────
+export const createRazorpayOrderForExisting = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const order = await Order.findById(req.params.orderId);
+    if (!order) return next(new AppError("Order not found.", 404));
+
+    if (order.user.toString() !== req.user!._id.toString()) {
+      return next(new AppError("Not authorized.", 403));
+    }
+    if (order.orderStatus !== "AwaitingPayment") {
+      return next(new AppError("This order is not awaiting payment.", 400));
+    }
+    if (order.paymentDueDate && order.paymentDueDate < new Date()) {
+      return next(new AppError("Payment deadline has passed. Order is no longer valid.", 400));
+    }
+
+    const options = {
+      amount: Math.round(order.totalAmount * 100), // paise
+      currency: "INR",
+      receipt: `rcpt_${req.user!._id.toString().slice(-8)}_${Date.now()}`,
+    };
+
+    let razorpayOrder;
+    try {
+      razorpayOrder = await razorpayInstance.orders.create(options);
+    } catch (err) {
+      const rzpErr = err as { statusCode?: number; error?: { description?: string } };
+      return next(new AppError(rzpErr.error?.description || "Razorpay order creation failed.", rzpErr.statusCode || 400));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { razorpayOrder, key: process.env.RAZORPAY_KEY_ID, order },
+    });
+  }
+);
+
+// ─── Verify Pay-Later Payment & Confirm Order ─────────────────────────────────
+export const verifyPayForOrder = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body as {
+      razorpay_order_id: string;
+      razorpay_payment_id: string;
+      razorpay_signature: string;
+    };
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET as string)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return next(new AppError("Payment verification failed. Invalid signature.", 400));
+    }
+
+    const order = await Order.findById(req.params.orderId).populate("user", "name email phone");
+    if (!order) return next(new AppError("Order not found.", 404));
+
+    if ((order.user as unknown as { _id: { toString(): string } })._id.toString() !== req.user!._id.toString()) {
+      return next(new AppError("Not authorized.", 403));
+    }
+
+    order.paymentInfo.razorpay_order_id = razorpay_order_id;
+    order.paymentInfo.razorpay_payment_id = razorpay_payment_id;
+    order.paymentInfo.razorpay_signature = razorpay_signature;
+    order.paymentInfo.status = "paid";
+    order.paymentInfo.paidAt = new Date();
+    order.paymentInfo.method = "razorpay";
+    order.orderStatus = "Processing";
+    order.statusHistory.push({
+      status: "Processing",
+      updatedAt: new Date(),
+      note: "Pay-later payment received — packing started",
+    });
+    await order.save();
+
+    // Send confirmation email + invoice
+    let invoicePdf: Buffer | undefined;
+    try {
+      invoicePdf = await generateInvoicePDF(order, req.user!);
+    } catch (err) {
+      console.error("Invoice PDF generation failed:", err);
+    }
+
+    if (invoicePdf) {
+      try {
+        await sendEmail({
+          to: req.user!.email,
+          subject: `Payment Received — Order #${order._id.toString().slice(-8).toUpperCase()} is now being packed!`,
+          html: orderConfirmationTemplate(
+            req.user!.name,
+            order._id.toString(),
+            order.orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            order.totalAmount
+          ),
+          attachments: [
+            { filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" },
+          ],
+        });
+      } catch (err) {
+        console.error("Payment confirmation email failed:", err);
+      }
+
+      if (req.user!.phone) {
+        try {
+          await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+        } catch (err) {
+          console.error("WhatsApp invoice send failed:", err);
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Payment received! Your order is now being packed.",
+      data: { orderId: order._id },
+    });
+  }
+);
+
 // ─── Razorpay Webhook ─────────────────────────────────────────────────────────
 export const razorpayWebhook = async (
   req: Request,

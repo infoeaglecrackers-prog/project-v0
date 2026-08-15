@@ -32,8 +32,8 @@ router.post(
       .matches(/^\d{6}$/)
       .withMessage("Valid 6-digit pincode required"),
     body("paymentMethod")
-      .isIn(["razorpay", "cod"])
-      .withMessage("Payment method must be razorpay or cod"),
+      .isIn(["razorpay", "cod", "pay_later"])
+      .withMessage("Payment method must be razorpay, cod, or pay_later"),
   ],
   validate,
   placeOrder

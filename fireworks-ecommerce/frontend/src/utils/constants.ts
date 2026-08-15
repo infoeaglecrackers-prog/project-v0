@@ -3,6 +3,8 @@ export const ORDER_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
   Pending: "yellow",
   pending: "yellow",
+  AwaitingPayment: "orange",
+  awaitingpayment: "orange",
   confirmed: "blue",
   Confirmed: "blue",
   Processing: "blue",
