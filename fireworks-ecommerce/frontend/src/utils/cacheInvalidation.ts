@@ -27,8 +27,8 @@ export const invalidateCache = {
     apiCache.clear(`category_${id}`);
   },
   dropPoints: () => {
-    const cacheKeys = Array.from((apiCache as any).cache.keys());
-    cacheKeys.forEach(key => {
+    const cacheKeys = Array.from((apiCache as any).cache.keys()) as string[];
+    cacheKeys.forEach((key: string) => {
       if (key.startsWith("drop_points_")) {
         apiCache.clear(key);
       }
