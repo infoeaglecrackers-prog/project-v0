@@ -38,7 +38,7 @@ export default function OrderReview({
   showPromoInput, promoInput, onPromoInputChange, onApplyPromo, onRemovePromo, promoLoading,
 }: Props) {
   const { cart } = useCart();
-  const { subtotal, discountAmount, shipping, tax, total } = pricing;
+  const { subtotal, discountAmount, total } = pricing;
 
   return (
     <div className="card p-5 space-y-4">
