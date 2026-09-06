@@ -27,7 +27,7 @@ export const generateInvoicePDF = (order: IOrder, user: InvoiceUser): Promise<Bu
     doc.fontSize(22).fillColor("#c9184a").font("Helvetica-Bold").text(BRAND, 50, 50);
     doc.fontSize(9).fillColor("#666").font("Helvetica").text("Safe, certified fireworks for every festival.", 50, 76);
 
-    doc.fontSize(16).fillColor("#111").font("Helvetica-Bold").text("TAX INVOICE", 0, 50, { align: "right" });
+    doc.fontSize(16).fillColor("#111").font("Helvetica-Bold").text("INVOICE", 0, 50, { align: "right" });
     doc.fontSize(9).fillColor("#666").font("Helvetica")
       .text(`Invoice No: ${invoiceNo}`, { align: "right" })
       .text(`Invoice Date: ${invoiceDate}`, { align: "right" })
@@ -101,11 +101,13 @@ export const generateInvoicePDF = (order: IOrder, user: InvoiceUser): Promise<Bu
     };
 
     totalsLine("Subtotal:", `${CURRENCY}${order.itemsPrice.toFixed(2)}`);
-    totalsLine("GST (18%):", `${CURRENCY}${order.taxAmount.toFixed(2)}`);
-    totalsLine("Shipping:", order.shippingPrice === 0 ? "FREE" : `${CURRENCY}${order.shippingPrice.toFixed(2)}`);
     doc.moveTo(340, y).lineTo(545, y).strokeColor("#e5e5e5").stroke();
     y += 6;
-    totalsLine("Grand Total:", `${CURRENCY}${order.totalAmount.toFixed(2)}`, true);
+    totalsLine("Grand Total:", `${CURRENCY}${order.itemsPrice.toFixed(2)}`, true);
+    y += 4;
+    doc.fontSize(8).fillColor("#999").font("Helvetica")
+      .text("* Shipping charges depend on location and are to be paid at the time of collection.", 340, y, { width: 205 });
+    y += 20;
 
     // ── Footer ──────────────────────────────────────────────
     doc.fontSize(8.5).fillColor("#999").font("Helvetica")
