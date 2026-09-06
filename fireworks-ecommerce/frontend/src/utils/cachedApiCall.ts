@@ -1,4 +1,4 @@
-import { apiCache, CACHE_DURATIONS } from "./apiCache";
+import { apiCache } from "./apiCache";
 
 interface CachedCallOptions {
   cacheKey: string;

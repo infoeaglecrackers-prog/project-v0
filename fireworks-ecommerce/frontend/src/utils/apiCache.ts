@@ -12,7 +12,7 @@ interface InFlightRequest {
 class APICache {
   private cache = new Map<string, CacheEntry<any>>();
   private inFlight = new Map<string, InFlightRequest>();
-  private refreshIntervals = new Map<string, NodeJS.Timeout>();
+  private refreshIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
   set<T>(key: string, data: T, ttlMs: number): void {
     this.cache.set(key, {

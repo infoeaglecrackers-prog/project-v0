@@ -9,8 +9,8 @@ export const invalidateCache = {
     if (filters) {
       apiCache.clear(`products_${JSON.stringify(filters)}`);
     } else {
-      const cacheKeys = Array.from((apiCache as any).cache.keys());
-      cacheKeys.forEach(key => {
+      const cacheKeys = Array.from((apiCache as any).cache.keys()) as string[];
+      cacheKeys.forEach((key: string) => {
         if (key.startsWith("products_") && !key.includes("featured") && !key.includes("bestsellers")) {
           apiCache.clear(key);
         }
@@ -39,15 +39,15 @@ export const invalidateCache = {
   },
   reviews: (productId?: string) => {
     if (productId) {
-      const cacheKeys = Array.from((apiCache as any).cache.keys());
-      cacheKeys.forEach(key => {
+      const cacheKeys = Array.from((apiCache as any).cache.keys()) as string[];
+      cacheKeys.forEach((key: string) => {
         if (key.startsWith(`reviews_product_${productId}`)) {
           apiCache.clear(key);
         }
       });
     } else {
-      const cacheKeys = Array.from((apiCache as any).cache.keys());
-      cacheKeys.forEach(key => {
+      const cacheKeys = Array.from((apiCache as any).cache.keys()) as string[];
+      cacheKeys.forEach((key: string) => {
         if (key.startsWith("reviews_")) {
           apiCache.clear(key);
         }
