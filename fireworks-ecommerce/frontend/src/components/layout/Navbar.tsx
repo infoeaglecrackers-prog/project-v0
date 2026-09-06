@@ -13,6 +13,7 @@ export default function Navbar() {
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,9 +42,26 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <span className="text-2xl animate-bounce-soft">🎆</span>
+          {logoError ? (
+            <span className="text-2xl animate-bounce-soft">🎆</span>
+          ) : (
+            <>
+              <img
+                src="/logo-light.png"
+                alt=""
+                className="h-10 w-10 object-contain rounded-full dark:hidden"
+                onError={() => setLogoError(true)}
+              />
+              <img
+                src="/logo-dark.png"
+                alt=""
+                className="h-10 w-10 object-contain rounded-full hidden dark:block"
+                onError={() => setLogoError(true)}
+              />
+            </>
+          )}
           <span className="font-bold text-lg hidden sm:block gradient-text tracking-tight">
-            Eagle Crackers
+            Elite Eagle Crackers
           </span>
         </Link>
 

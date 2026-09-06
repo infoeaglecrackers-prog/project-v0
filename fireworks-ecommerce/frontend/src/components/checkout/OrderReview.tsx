@@ -2,6 +2,7 @@ import { Tag, X, Package } from "lucide-react";
 import type { IAddress } from "../../types";
 import type { IDropPoint } from "../../services/dropPointService";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { PAYMENT_METHOD_LABELS } from "../../utils/constants";
 import { useCart } from "../../hooks/useCart";
 
 interface Pricing {
@@ -122,14 +123,15 @@ export default function OrderReview({
             <span>−{formatCurrency(discountAmount)}</span>
           </div>
         )}
-        <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Shipping</span><span>{shipping === 0 ? "FREE" : formatCurrency(shipping)}</span></div>
-        <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Tax (GST 18%)</span><span>{formatCurrency(tax)}</span></div>
+        <div className="flex justify-between items-start"><span className="text-gray-500 dark:text-gray-400">Shipping</span><span className="text-right text-xs text-gray-400 dark:text-gray-500 max-w-[160px]">Depends on location — paid at collection</span></div>
         <div className="flex justify-between font-semibold text-dark dark:text-gray-100 text-base pt-1 border-t dark:border-gray-700">
           <span>Total</span><span>{formatCurrency(total)}</span>
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 dark:text-gray-500">Payment: {paymentMethod.replace("razorpay_", "").toUpperCase()}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Payment: {PAYMENT_METHOD_LABELS[paymentMethod] || paymentMethod.replace("razorpay_", "").toUpperCase()}
+      </p>
     </div>
   );
 }

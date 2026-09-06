@@ -9,6 +9,13 @@ export const adminService = {
   updateOrderStatus: (id: string, data: { status: string; trackingNumber?: string; courier?: string }) =>
     api.put(`/admin/orders/${id}/status`, data),
 
+  /** Confirm a UPI payment claim against the bank statement — moves order to Processing. */
+  verifyOrderPayment: (id: string) => api.post(`/admin/orders/${id}/payment/verify`),
+
+  /** Send a UPI claim back to the customer so they can resubmit a corrected UTR. */
+  rejectOrderPayment: (id: string, reason: string) =>
+    api.post(`/admin/orders/${id}/payment/reject`, { reason }),
+
   // Users
   getUsers: (params = {}) => api.get("/admin/users", { params }),
   getUserById: (id: string) => api.get(`/admin/users/${id}`),

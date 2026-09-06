@@ -12,8 +12,15 @@ import sendEmail from "../utils/sendEmail";
 import {
   orderShippedTemplate,
   orderDeliveredTemplate,
+  orderConfirmationTemplate,
 } from "../templates/email.templates";
+import { generateInvoicePDF } from "../utils/generateInvoice";
+import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
+import { getAdminRecipientLine } from "../utils/adminRecipients";
 import { OrderStatus } from "../models/Order";
+
+/** Rs. rather than ₹ — the rupee glyph mangles in some mail clients' default fonts. */
+const formatINR = (n: number): string => `Rs. ${n.toFixed(2)}`;
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 export const getDashboardStats = catchAsync(
@@ -198,6 +205,176 @@ export const updateOrderStatus = catchAsync(
     res.status(200).json({
       success: true,
       message: `Order status updated to ${status}`,
+      data: { order },
+    });
+  }
+);
+
+// ─── Verify a Self-Hosted UPI Payment ─────────────────────────────────────────
+// The only path that can mark a UPI order paid. There is no gateway callback, so
+// this is a human asserting the money is on the bank statement.
+export const verifyUpiPayment = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const order = await Order.findById(req.params.id).populate("user", "name email phone");
+    if (!order) return next(new AppError("Order not found.", 404));
+
+    if (order.orderStatus !== "AwaitingVerification") {
+      return next(
+        new AppError("This order has no payment claim awaiting verification.", 400)
+      );
+    }
+
+    const utr = order.paymentInfo.utr;
+
+    order.paymentInfo.status = "paid";
+    order.paymentInfo.paidAt = new Date();
+    order.paymentInfo.verifiedBy = req.user!._id;
+    order.paymentInfo.verifiedAt = new Date();
+    order.paymentInfo.rejectionReason = undefined;
+    order.orderStatus = "Processing";
+    order.statusHistory.push({
+      status: "Processing",
+      updatedAt: new Date(),
+      note: `UPI payment verified${utr ? ` (UTR ${utr})` : ""} — packing started`,
+    });
+    await order.save();
+
+    const user = order.user as unknown as { name: string; email: string; phone?: string };
+
+    // Now that the payment is real, the invoice is meaningful — send it.
+    let invoicePdf: Buffer | undefined;
+    try {
+      invoicePdf = await generateInvoicePDF(order, { name: user.name, email: user.email });
+    } catch (err) {
+      console.error("Invoice PDF generation failed:", err);
+    }
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: `Payment Confirmed — Order #${order._id.toString().slice(-8).toUpperCase()} is being packed!`,
+        html: orderConfirmationTemplate(
+          user.name,
+          order._id.toString(),
+          order.orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+          order.totalAmount
+        ),
+        attachments: invoicePdf
+          ? [{ filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" }]
+          : undefined,
+      });
+    } catch (err) {
+      console.error("Payment confirmation email failed:", err);
+    }
+
+    if (invoicePdf && user.phone) {
+      try {
+        await sendWhatsAppInvoice(user.phone, user.name, order._id.toString(), invoicePdf);
+      } catch (err) {
+        console.error("WhatsApp invoice send failed:", err);
+      }
+    }
+
+    // Tell the whole admin team the money landed, so whoever picks up packing
+    // knows it's settled and nobody double-verifies the same claim.
+    const adminLine = await getAdminRecipientLine();
+    if (adminLine) {
+      const verifier = req.user?.name || "an admin";
+      try {
+        await sendEmail({
+          to: adminLine,
+          subject: `Payment successful — Order #${order._id.toString().slice(-8).toUpperCase()} (${formatINR(order.totalAmount)})`,
+          html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
+              <h2 style="color:#16a34a">✅ Payment verified</h2>
+              <p><strong>Order:</strong> #${order._id.toString().slice(-8).toUpperCase()}</p>
+              <p><strong>Amount:</strong> ${formatINR(order.totalAmount)}</p>
+              <p><strong>UTR:</strong> ${utr || "—"}</p>
+              <p><strong>Customer:</strong> ${user.name} (${user.email})</p>
+              <p><strong>Verified by:</strong> ${verifier}</p>
+              <p style="color:#6b7280;font-size:13px">The order has moved to Processing — packing can begin.</p>
+              <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/orders/${order._id}"
+                style="display:inline-block;background:#c9184a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
+                Open Order →
+              </a>
+            </div>
+          `,
+        });
+      } catch (err) {
+        console.error("Admin payment-successful email failed:", err);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Payment verified. Order moved to Processing.",
+      data: { order },
+    });
+  }
+);
+
+// ─── Reject a Self-Hosted UPI Payment Claim ───────────────────────────────────
+export const rejectUpiPayment = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const reason = String((req.body as { reason?: string }).reason || "").trim();
+    if (!reason) {
+      return next(new AppError("A rejection reason is required.", 400));
+    }
+
+    const order = await Order.findById(req.params.id).populate("user", "name email");
+    if (!order) return next(new AppError("Order not found.", 404));
+
+    if (order.orderStatus !== "AwaitingVerification") {
+      return next(
+        new AppError("This order has no payment claim awaiting verification.", 400)
+      );
+    }
+
+    const rejectedUtr = order.paymentInfo.utr;
+
+    // The UTR is cleared so the customer can submit a corrected one — the unique
+    // index would otherwise reject their second attempt. The rejected value is
+    // preserved in the status history rather than lost.
+    order.paymentInfo.utr = undefined;
+    order.paymentInfo.utrSubmittedAt = undefined;
+    order.paymentInfo.status = "pending";
+    order.paymentInfo.rejectionReason = reason;
+    order.orderStatus = "AwaitingPayment";
+    order.statusHistory.push({
+      status: "AwaitingPayment",
+      updatedAt: new Date(),
+      note: `Payment claim rejected${rejectedUtr ? ` (UTR ${rejectedUtr})` : ""}: ${reason}`,
+    });
+    await order.save();
+
+    const user = order.user as unknown as { name: string; email: string };
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: `Payment could not be verified — Order #${order._id.toString().slice(-8).toUpperCase()}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
+            <h2 style="color:#c9184a">We couldn't verify your payment</h2>
+            <p>Hi <strong>${user.name}</strong>,</p>
+            <p>We couldn't match a payment to order <strong>#${order._id.toString().slice(-8).toUpperCase()}</strong>.</p>
+            <div style="background:#fef2f2;border-left:4px solid #ef4444;padding:16px;border-radius:8px;margin:16px 0">
+              <p style="margin:0"><strong>Reason:</strong> ${reason}</p>
+            </div>
+            <p>If you have already paid, please re-check the 12-digit UTR in your UPI app and submit it again. If money was debited and this looks wrong, reply to this email and we'll sort it out.</p>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/orders/${order._id}"
+              style="display:inline-block;background:#c9184a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
+              Open Order →
+            </a>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.error("Payment rejection email failed:", err);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Payment claim rejected. Customer notified.",
       data: { order },
     });
   }

@@ -9,6 +9,7 @@ import {
 } from "../controllers/order.controller";
 import { protect } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
+import { enabledPaymentMethods } from "../config/features";
 
 const router = Router();
 
@@ -31,9 +32,15 @@ router.post(
     body("shippingAddress.pincode")
       .matches(/^\d{6}$/)
       .withMessage("Valid 6-digit pincode required"),
-    body("paymentMethod")
-      .isIn(["razorpay", "cod", "pay_later"])
-      .withMessage("Payment method must be razorpay, cod, or pay_later"),
+    // .custom() rather than .isIn() so the allowed set is read per-request:
+    // the flag isn't available at route-registration time (see config/features.ts).
+    body("paymentMethod").custom((v) => {
+      const allowed = enabledPaymentMethods();
+      if (!allowed.includes(v)) {
+        throw new Error(`Payment method must be one of: ${allowed.join(", ")}`);
+      }
+      return true;
+    }),
   ],
   validate,
   placeOrder

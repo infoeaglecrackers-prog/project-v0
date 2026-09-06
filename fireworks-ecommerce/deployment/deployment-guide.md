@@ -135,7 +135,7 @@ SMTP_PORT          = 587
 SMTP_EMAIL         = youremail@gmail.com
 SMTP_PASSWORD      = your_app_password
 FROM_EMAIL         = noreply@eaglecrackers.com
-FROM_NAME          = Eagle Crackers
+FROM_NAME          = Elite Eagle Crackers
 CLIENT_URL         = https://www.eaglecrackers.com
 
 # 6. Deploy → Wait for build to finish

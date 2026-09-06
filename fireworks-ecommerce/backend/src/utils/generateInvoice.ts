@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 import { IOrder } from "../models/Order";
 
-const BRAND = process.env.FROM_NAME || "Eagle Crackers";
+const BRAND = process.env.FROM_NAME || "Elite Eagle Crackers";
 const CURRENCY = "Rs. "; // PDFKit's built-in Helvetica has no ₹ glyph — falls back to garbled text
 
 interface InvoiceUser {
@@ -46,11 +46,22 @@ export const generateInvoicePDF = (order: IOrder, user: InvoiceUser): Promise<Bu
       .text(`${addr.city}, ${addr.state} - ${addr.pincode}`, 50, 202)
       .text(addr.country, 50, 216);
 
+    const METHOD_LABELS: Record<string, string> = {
+      upi: "UPI",
+      pay_later: "UPI (Pay Later)",
+      cod: "Cash on Delivery",
+      razorpay: "Razorpay (Online)",
+    };
+
     doc.fontSize(10).fillColor("#111").font("Helvetica-Bold").text("Payment Details:", 320, 130);
     doc.fontSize(9.5).fillColor("#444").font("Helvetica")
-      .text(`Method: ${order.paymentInfo.method === "cod" ? "Cash on Delivery" : "Razorpay (Online)"}`, 320, 146)
+      .text(`Method: ${METHOD_LABELS[order.paymentInfo.method] || order.paymentInfo.method}`, 320, 146)
       .text(`Status: ${order.paymentInfo.status.toUpperCase()}`, 320, 160);
-    if (order.paymentInfo.razorpay_payment_id) {
+    // A UPI order's reference is the bank UTR; legacy gateway orders carry a
+    // Razorpay payment id instead. Only one of the two is ever present.
+    if (order.paymentInfo.utr) {
+      doc.text(`UTR: ${order.paymentInfo.utr}`, 320, 174);
+    } else if (order.paymentInfo.razorpay_payment_id) {
       doc.text(`Payment ID: ${order.paymentInfo.razorpay_payment_id}`, 320, 174);
     }
 

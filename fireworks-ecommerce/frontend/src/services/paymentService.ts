@@ -1,6 +1,30 @@
 import api from "./api";
 
+export interface UpiIntentResponse {
+  upiUri: string;
+  /** PNG data URL. Absent if server-side QR rendering failed. */
+  qrDataUrl?: string;
+  vpa: string;
+  payeeName: string;
+  /** Rupees, fixed to 2 decimals. */
+  amount: string;
+  refId: string;
+  paymentDueDate?: string;
+}
+
 export const paymentService = {
+  // ── Self-hosted UPI rail ──
+  /** Deep link + QR for an order awaiting payment. */
+  getUpiIntent: (orderId: string) =>
+    api.get<{ success: boolean; data: UpiIntentResponse }>(
+      `/payment/upi/${orderId}/intent`
+    ),
+
+  /** Report the 12-digit UTR — queues the order for admin verification. */
+  submitUtr: (orderId: string, utr: string) =>
+    api.post(`/payment/upi/${orderId}/claim`, { utr }),
+
+  // ── Razorpay (only reachable when the flag is on, both ends) ──
   createRazorpayOrder: (amountInRupees: number) =>
     api.post("/payment/create-order", { amount: Math.round(amountInRupees * 100) }),
 

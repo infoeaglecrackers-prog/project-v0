@@ -20,7 +20,7 @@ const TEMPLATES: Record<string, { subject: string; html: (name: string, extra?: 
           style="display:inline-block;background:#c9184a;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
           Shop Now →
         </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">Eagle Crackers — Light Up Every Celebration 🎇</p>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">Elite Eagle Crackers — Light Up Every Celebration 🎇</p>
       </div>`,
   },
   confirm_payment: {
@@ -38,7 +38,7 @@ const TEMPLATES: Record<string, { subject: string; html: (name: string, extra?: 
           style="display:inline-block;background:#c9184a;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
           Pay Now →
         </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">Eagle Crackers — Light Up Every Celebration 🎇</p>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">Elite Eagle Crackers — Light Up Every Celebration 🎇</p>
       </div>`,
   },
   thank_you_order: {
@@ -47,13 +47,13 @@ const TEMPLATES: Record<string, { subject: string; html: (name: string, extra?: 
       <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
         <h2 style="color:#c9184a">Thank You for Ordering!</h2>
         <p>Hi <strong>${name}</strong>,</p>
-        <p>We sincerely thank you for choosing Eagle Crackers. Your order is being processed with care.</p>
+        <p>We sincerely thank you for choosing Elite Eagle Crackers. Your order is being processed with care.</p>
         <p>We hope our fireworks light up your celebrations! 🎆🎇✨</p>
         <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/orders"
           style="display:inline-block;background:#c9184a;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
           View My Orders →
         </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">Eagle Crackers — Light Up Every Celebration 🎇</p>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">Elite Eagle Crackers — Light Up Every Celebration 🎇</p>
       </div>`,
   },
   information_required: {
@@ -67,7 +67,7 @@ const TEMPLATES: Record<string, { subject: string; html: (name: string, extra?: 
           <p style="margin:0;color:#0369a1">${extra?.customMessage || "Please reply to this email or contact our support team with the required details."}</p>
         </div>
         <p>Our support team is ready to help you. You can reach us at <a href="mailto:${process.env.SMTP_EMAIL}">${process.env.SMTP_EMAIL}</a>.</p>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">Eagle Crackers — Light Up Every Celebration 🎇</p>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">Elite Eagle Crackers — Light Up Every Celebration 🎇</p>
       </div>`,
   },
   new_arrival: {
@@ -81,22 +81,22 @@ const TEMPLATES: Record<string, { subject: string; html: (name: string, extra?: 
           style="display:inline-block;background:#c9184a;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
           Explore New Arrivals →
         </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">Eagle Crackers — Light Up Every Celebration 🎇</p>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">Elite Eagle Crackers — Light Up Every Celebration 🎇</p>
       </div>`,
   },
   seasonal_greetings: {
-    subject: "🎉 Season's Greetings from Eagle Crackers!",
+    subject: "🎉 Season's Greetings from Elite Eagle Crackers!",
     html: (name) => `
       <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
-        <h2 style="color:#c9184a">🎉 Warm Wishes from Eagle Crackers!</h2>
+        <h2 style="color:#c9184a">🎉 Warm Wishes from Elite Eagle Crackers!</h2>
         <p>Hi <strong>${name}</strong>,</p>
         <p>Wishing you and your family a joyful and bright festive season! May your celebrations be filled with light and laughter.</p>
         <p>Visit us for the best crackers to make your festival extra special! 🎆🪔✨</p>
         <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}"
           style="display:inline-block;background:#c9184a;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">
-          Visit Eagle Crackers →
+          Visit Elite Eagle Crackers →
         </a>
-        <p style="margin-top:24px;color:#6b7280;font-size:13px">Eagle Crackers — Light Up Every Celebration 🎇</p>
+        <p style="margin-top:24px;color:#6b7280;font-size:13px">Elite Eagle Crackers — Light Up Every Celebration 🎇</p>
       </div>`,
   },
   custom: {
@@ -149,7 +149,7 @@ export const sendBulkEmail = catchAsync(
     if (users.length === 0)
       return next(new AppError("No users found for the selected criteria.", 404));
 
-    const subject = templateId === "custom" ? (customSubject || "Message from Eagle Crackers") : template.subject;
+    const subject = templateId === "custom" ? (customSubject || "Message from Elite Eagle Crackers") : template.subject;
     let successCount = 0;
     const errors: string[] = [];
 

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Badge from "../common/Badge";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDate } from "../../utils/formatDate";
-import { ORDER_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "../../utils/constants";
+import { ORDER_STATUS_COLORS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from "../../utils/constants";
 import type { IOrder } from "../../types";
 import { ChevronRight } from "lucide-react";
 
@@ -38,7 +38,7 @@ export default function OrderTable({ orders, onStatusChange }: Props) {
               <td className="py-3 px-4">
                   <Badge
                     label={PAYMENT_STATUS_LABELS[order.paymentInfo?.status || order.paymentStatus] || order.paymentInfo?.status || order.paymentStatus}
-                    color={(order.paymentInfo?.status || order.paymentStatus) === "paid" ? "green" : "yellow"}
+                    color={PAYMENT_STATUS_COLORS[order.paymentInfo?.status || order.paymentStatus] as "green" | "red" | "yellow" | "blue" | "gray"}
                   />
               </td>
               <td className="py-3 px-4">
@@ -48,6 +48,12 @@ export default function OrderTable({ orders, onStatusChange }: Props) {
                     onChange={(e) => onStatusChange(order._id, e.target.value)}
                     className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-2 py-1 text-xs"
                   >
+                    {/* AwaitingPayment/AwaitingVerification aren't manually settable
+                        (see AdminOrderDetail), but must still show as the current
+                        value rather than rendering an empty select. */}
+                    {!STATUS_OPTIONS.includes(order.orderStatus) && (
+                      <option value={order.orderStatus} disabled>{order.orderStatus}</option>
+                    )}
                     {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 ) : (

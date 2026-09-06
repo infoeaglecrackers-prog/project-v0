@@ -3,15 +3,8 @@ import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { fetchFeatured, fetchBestSellers } from "../store/slices/productSlice";
 import ProductGrid from "../components/product/ProductGrid";
-import { ArrowRight, ShieldCheck, Truck, RefreshCw, Headphones, Zap } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import FireworksCanvas, { type FireworksHandle } from "../components/common/FireworksCanvas";
-
-const features = [
-  { icon: ShieldCheck, label: "Certified Safe",  desc: "All products are PESO approved",   color: "from-green-500 to-emerald-400" },
-  { icon: Truck,       label: "Fast Delivery",   desc: "2-3 day delivery across India",     color: "from-primary to-primary-400"  },
-  { icon: RefreshCw,   label: "Easy Returns",    desc: "7-day hassle-free returns",         color: "from-secondary to-yellow-400" },
-  { icon: Headphones,  label: "24/7 Support",    desc: "Always here to help you",           color: "from-purple-500 to-pink-400"  },
-];
 
 export default function HomePage() {
   const dispatch = useAppDispatch();
@@ -35,7 +28,7 @@ export default function HomePage() {
         <div className="flex animate-ticker whitespace-nowrap select-none">
           {[0, 1].map((ri) => (
             <div key={ri} className="flex shrink-0">
-              {["🎆 FESTIVAL SEASON SALE — UP TO 40% OFF", "🚀 FREE DELIVERY ABOVE ₹999", "✨ PESO CERTIFIED FIREWORKS", "🎇 100K+ HAPPY CUSTOMERS", "🎊 PAN-INDIA DELIVERY", "🔥 LIMITED STOCK — ORDER NOW", "💥 EAGLE CRACKERS — INDIA'S FAVOURITE"].map((text, i) => (
+              {["🎆 FESTIVAL SEASON SALE — UP TO 70% OFF", "✨ PESO CERTIFIED FIREWORKS", "🎇 10K+ HAPPY CUSTOMERS", "🎊 PAN-INDIA DELIVERY", "🔥 LIMITED STOCK — ORDER NOW", "💥 ELITE EAGLE CRACKERS — INDIA'S FAVOURITE"].map((text, i) => (
                 <span key={i} className="px-8 text-white font-bold text-xs tracking-widest uppercase">
                   {text}
                 </span>
@@ -97,7 +90,7 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6
                             bg-white/5 border border-white/10 text-sm text-gray-300 animate-fade-in">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
-              Festival Season Sale — Up to 40% OFF
+              Festival Season Sale — Up to 70% OFF
             </div>
 
             {/* Headline */}
@@ -135,7 +128,7 @@ export default function HomePage() {
 
             {/* Trust indicators */}
             <div className="flex flex-wrap justify-center gap-6 mt-6 text-sm text-gray-500 animate-fade-in">
-              {["PESO Certified", "100k+ Happy Customers", "Pan-India Delivery"].map((t) => (
+              {["PESO Certified", "10k+ Happy Customers", "Pan-India Delivery"].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
                   {t}
@@ -146,42 +139,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── FEATURES ─────────────────────────────────────────── */}
-      <section className="bg-gray-50 dark:bg-dark-300 border-b border-gray-200 dark:border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {features.map((f, i) => (
-            <div key={f.label} className="feature-card flex items-center gap-3" style={{ animationDelay: `${i * 0.08}s` }}>
-              <div className={`w-11 h-11 bg-gradient-to-br ${f.color} rounded-xl flex items-center justify-center shrink-0 shadow-sm`}>
-                <f.icon size={18} className="text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-dark dark:text-gray-100 text-sm">{f.label}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">{f.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── FEATURED PRODUCTS ────────────────────────────────── */}
-      {featured.length > 0 && (
+      {(loading || featured.length > 0) && (
         <section className="max-w-7xl mx-auto px-4 py-14">
           <div className="flex items-center justify-between mb-8">
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Handpicked</p>
               <h2 className="section-title mb-0">✨ Featured Products</h2>
             </div>
-            <Link to="/products?featured=true"
-                  className="flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all duration-200">
-              View all <ArrowRight size={14} />
-            </Link>
+            {!loading && (
+              <Link to="/products?featured=true"
+                    className="flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all duration-200">
+                View all <ArrowRight size={14} />
+              </Link>
+            )}
           </div>
           <ProductGrid products={featured.slice(0, 8)} loading={loading} />
         </section>
       )}
 
       {/* ── BEST SELLERS ─────────────────────────────────────── */}
-      {bestSellers.length > 0 && (
+      {(loading || bestSellers.length > 0) && (
         <section className="py-14 bg-gray-50 dark:bg-dark-300">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
@@ -189,10 +167,12 @@ export default function HomePage() {
                 <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Top Picks</p>
                 <h2 className="section-title mb-0">🔥 Best Sellers</h2>
               </div>
-              <Link to="/products?sort=-sold"
-                    className="flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all duration-200">
-                View all <ArrowRight size={14} />
-              </Link>
+              {!loading && (
+                <Link to="/products?sort=-sold"
+                      className="flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all duration-200">
+                  View all <ArrowRight size={14} />
+                </Link>
+              )}
             </div>
             <ProductGrid products={bestSellers.slice(0, 8)} loading={loading} />
           </div>
@@ -217,8 +197,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-2xl mx-auto text-center text-white">
           <div className="text-4xl mb-4">🎊</div>
           <h2 className="text-3xl font-bold mb-3">Festival Season Sale!</h2>
-          <p className="text-white/80 mb-2 text-lg">Up to 40% off on selected fireworks. Limited stock — order now!</p>
-          <p className="text-white/40 text-xs mb-8">Click this banner to fire rainbow rockets 🌈</p>
+          <p className="text-white/80 mb-2 text-lg">Up to 70% off on selected fireworks. Limited stock — order now!</p>
           <Link
             to="/products?minPrice=0&maxPrice=500"
             className="inline-flex items-center gap-2 bg-white text-primary font-bold

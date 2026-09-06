@@ -2,9 +2,12 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/logo-dark.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Eagle Crackers — Festival Fireworks</title>
+    <title>Elite Eagle Crackers — Festival Fireworks</title>
+    <!-- Razorpay checkout. Inert while VITE_ENABLE_RAZORPAY is unset: payments go
+         over the self-hosted UPI rail and nothing touches window.Razorpay. Kept
+         loaded so re-enabling the gateway is an env change, not a code change. -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   </head>
   <body>

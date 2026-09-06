@@ -14,6 +14,7 @@ import { formatCurrency } from "../utils/formatCurrency";
 import { useAuth } from "../hooks/useAuth";
 import { reviewService } from "../services/reviewService";
 import toast from "react-hot-toast";
+import { toastAdded } from "../utils/cartToast";
 import type { IReview } from "../types";
 
 export default function ProductDetailPage() {
@@ -45,7 +46,7 @@ export default function ProductDetailPage() {
   const handleAddToCart = async () => {
     if (!isAuthenticated) { navigate("/login"); return; }
     await dispatch(addToCart({ productId: product._id, quantity: qty }));
-    toast.success("Added to cart!");
+    toastAdded(qty, product.name);
   };
 
   const handleBuyNow = async () => {

@@ -5,6 +5,8 @@ import {
   getAllOrders,
   getOrderDetail,
   updateOrderStatus,
+  verifyUpiPayment,
+  rejectUpiPayment,
   getAllUsers,
   getUserDetail,
   changeUserRole,
@@ -46,6 +48,18 @@ router.put(
   ],
   validate,
   updateOrderStatus
+);
+
+// ─── UPI Payment Verification ──────────────────────────────────────────────────
+// The manual settlement step: an admin confirms the credit on the bank statement
+// before the order can move to Processing.
+router.post("/orders/:id/payment/verify", verifyUpiPayment);
+
+router.post(
+  "/orders/:id/payment/reject",
+  [body("reason").trim().notEmpty().withMessage("A rejection reason is required")],
+  validate,
+  rejectUpiPayment
 );
 
 // ─── Users ─────────────────────────────────────────────────────────────────────

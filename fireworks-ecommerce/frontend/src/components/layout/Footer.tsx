@@ -24,8 +24,8 @@ export default function Footer() {
         {/* Brand */}
         <div>
           <Link to="/" className="flex items-center gap-2 mb-5">
-            <span className="text-2xl">🎆</span>
-            <span className="text-white font-bold text-lg gradient-text">Eagle Crackers</span>
+            <img src="/logo-dark.png" alt="" className="h-10 w-10 object-contain rounded-full" />
+            <span className="text-white font-bold text-lg gradient-text">Elite Eagle Crackers</span>
           </Link>
           <p className="text-sm leading-relaxed text-gray-500">
             Safe, certified fireworks for every festival.<br />
@@ -134,7 +134,7 @@ export default function Footer() {
       >
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Eagle Crackers. All rights reserved.
+            © {new Date().getFullYear()} Elite Eagle Crackers. All rights reserved.
           </p>
           <p className="text-xs text-gray-700 flex items-center gap-1">
             Made with

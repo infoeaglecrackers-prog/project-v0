@@ -1,20 +1,49 @@
 import { CreditCard, Smartphone, Building2, Wallet, Clock } from "lucide-react";
+import { RAZORPAY_ENABLED } from "../../config/features";
 
 interface Props {
   selected: string;
   onSelect: (method: string) => void;
 }
 
-const methods = [
+interface Method {
+  id: string;
+  label: string;
+  icon: typeof CreditCard;
+  desc: string;
+  gpay?: boolean;
+}
+
+// The two self-hosted rails. Both settle over UPI into our own VPA — `upi` pays
+// straight away, `pay_later` reserves the order and pays within 2 days.
+const SELF_HOSTED: Method[] = [
+  {
+    id: "upi",
+    label: "Google Pay / UPI",
+    icon: Smartphone,
+    desc: "Pay now with GPay, PhonePe, Paytm or any UPI app",
+    gpay: true,
+  },
+  {
+    id: "pay_later",
+    label: "Pay Later",
+    icon: Clock,
+    desc: "Place now, pay by UPI within 2 days — packing starts after payment",
+  },
+];
+
+// Only rendered when VITE_ENABLE_RAZORPAY=true (and the backend flag matches).
+const RAZORPAY_METHODS: Method[] = [
   { id: "razorpay_card", label: "Credit / Debit Card", icon: CreditCard, desc: "Visa, Mastercard, RuPay" },
-  { id: "razorpay_gpay", label: "Google Pay", icon: Smartphone, desc: "Pay directly with GPay app", gpay: true },
-  { id: "razorpay_upi", label: "Other UPI", icon: Smartphone, desc: "PhonePe, Paytm, any UPI app" },
+  { id: "razorpay_gpay", label: "Google Pay (Razorpay)", icon: Smartphone, desc: "Pay directly with GPay", gpay: true },
+  { id: "razorpay_upi", label: "Other UPI (Razorpay)", icon: Smartphone, desc: "PhonePe, Paytm, any UPI app" },
   { id: "razorpay_nb", label: "Net Banking", icon: Building2, desc: "All major banks" },
   { id: "cod", label: "Cash on Delivery", icon: Wallet, desc: "Pay when you receive" },
-  { id: "pay_later", label: "Pay Later", icon: Clock, desc: "Place now, pay within 2 days — packing starts after payment" },
 ];
 
 export default function PaymentOptions({ selected, onSelect }: Props) {
+  const methods = RAZORPAY_ENABLED ? [...SELF_HOSTED, ...RAZORPAY_METHODS] : SELF_HOSTED;
+
   return (
     <div>
       <h3 className="font-semibold text-dark dark:text-gray-100 mb-4">Payment Method</h3>
@@ -28,7 +57,7 @@ export default function PaymentOptions({ selected, onSelect }: Props) {
             }`}
           >
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selected === m.id ? "bg-primary text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
-              {"gpay" in m ? (
+              {m.gpay ? (
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/120px-Google_Pay_Logo.svg.png" alt="GPay" className="w-6 h-6 object-contain" />
               ) : (
                 <m.icon size={18} />
@@ -45,9 +74,20 @@ export default function PaymentOptions({ selected, onSelect }: Props) {
           </div>
         ))}
       </div>
-      {selected === "pay_later" && (
+
+      {/* Both self-hosted rails need the manual-verification caveat spelled out —
+          there's no gateway to confirm the payment instantly. */}
+      {(selected === "upi" || selected === "pay_later") && (
         <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg text-sm text-orange-700 dark:text-orange-300">
-          ⏰ <strong>Pay Later Notice:</strong> Your order will be reserved but packing will begin <strong>only after payment is received</strong>. You have 2 days from order placement to complete payment.
+          {selected === "pay_later" ? (
+            <>
+              ⏰ <strong>Pay Later:</strong> your order is reserved, but packing begins <strong>only after payment is received and verified</strong>. You have 2 days to pay by UPI.
+            </>
+          ) : (
+            <>
+              📲 <strong>How it works:</strong> we'll show you a UPI QR and a Google Pay button on the next screen. After paying, enter the 12-digit reference number so we can verify it against our bank statement — packing starts once confirmed.
+            </>
+          )}
         </div>
       )}
     </div>

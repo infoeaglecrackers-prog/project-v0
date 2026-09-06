@@ -10,12 +10,21 @@ const steps = [
 
 const ORDER = ["pending", "confirmed", "processing", "shipped", "delivered"];
 
+// Statuses that aren't timeline steps of their own but do mean the order exists.
+// Without these, every unpaid UPI order — i.e. every freshly placed order —
+// falls through to index -1 and renders as if nothing had happened yet.
+const STATUS_ALIASES: Record<string, string> = {
+  awaitingpayment: "pending",
+  awaitingverification: "pending",
+};
+
 interface Props {
   status: string;
 }
 
 export default function OrderTimeline({ status }: Props) {
-  const normalizedStatus = status?.toLowerCase();
+  const raw = status?.toLowerCase();
+  const normalizedStatus = STATUS_ALIASES[raw] || raw;
 
   if (normalizedStatus === "cancelled") {
     return (

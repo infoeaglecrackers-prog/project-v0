@@ -16,17 +16,13 @@ import type { IAddress } from "../types";
 import type { IDropPoint } from "../services/dropPointService";
 import toast from "react-hot-toast";
 import { useCart } from "../hooks/useCart";
+import { RAZORPAY_ENABLED } from "../config/features";
 
 const STEPS = ["Address", "Payment", "Review"];
 
-// Mirrors backend/src/controllers/order.controller.ts so the checkout preview
-// (and the amount actually sent to Razorpay) matches what gets stored server-side.
-const GST_RATE = 0.18;
-const FREE_SHIPPING_THRESHOLD = 999;
-const SHIPPING_CHARGE = 99;
-
 // Restricts which tabs Razorpay's checkout shows, so the method picked in step 2 actually matters
 // instead of every option opening the same all-methods Razorpay screen.
+// Only reachable while RAZORPAY_ENABLED — see config/features.ts.
 const RAZORPAY_METHOD: Record<string, Record<string, boolean>> = {
   razorpay_card: { card: true, netbanking: false, upi: false, wallet: false, paylater: false },
   razorpay_upi: { card: false, netbanking: false, upi: true, wallet: false, paylater: false },
@@ -44,7 +40,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [addresses, setAddresses] = useState<IAddress[]>([]);
   const [selectedAddr, setSelectedAddr] = useState<string | null>(null);
-  const [payMethod, setPayMethod] = useState("razorpay_card");
+  const [payMethod, setPayMethod] = useState("upi");
   const [addrModal, setAddrModal] = useState(false);
   const [editAddr, setEditAddr] = useState<IAddress | null>(null);
   const [selectedDropPoint, setSelectedDropPoint] = useState<IDropPoint | null>(null);
@@ -56,9 +52,9 @@ export default function CheckoutPage() {
   const subtotal = cart?.totalPrice || 0;
   const discountAmount = appliedPromo?.discountAmount || 0;
   const taxableAmount = subtotal - discountAmount;
-  const shipping = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-  const tax = Math.round(taxableAmount * GST_RATE * 100) / 100;
-  const total = Math.round((taxableAmount + tax + shipping) * 100) / 100;
+  const shipping = 0;
+  const tax = 0;
+  const total = Math.round((taxableAmount + shipping) * 100) / 100;
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;
@@ -135,10 +131,39 @@ export default function CheckoutPage() {
       quantity: item.quantity,
     }));
 
-    const isCod = payMethod === "cod";
-    const isPayLater = payMethod === "pay_later";
+    // Self-hosted rails: create the order, then send the customer to its detail
+    // page, which owns the UPI pay panel. Routing both through one place means
+    // the checkout, the "Pay Now" email link and a later retry all behave the same.
+    if (payMethod === "upi" || payMethod === "pay_later") {
+      const result = await dispatch(
+        createOrder({
+          items,
+          shippingAddress,
+          paymentMethod: payMethod as "upi" | "pay_later",
+          promoCode: appliedPromo?.code,
+        })
+      );
+      if (createOrder.fulfilled.match(result)) {
+        toast.success(
+          payMethod === "pay_later"
+            ? "Order placed! Pay by UPI within 2 days to start packing."
+            : "Order placed! Complete the UPI payment to confirm it."
+        );
+        navigate(`/orders/${(result.payload as { _id: string })._id}`);
+      } else {
+        toast.error("Order failed");
+      }
+      return;
+    }
 
-    if (!isCod && !isPayLater) {
+    if (!RAZORPAY_ENABLED) {
+      toast.error("This payment method is unavailable. Please choose UPI or Pay Later.");
+      return;
+    }
+
+    const isCod = payMethod === "cod";
+
+    if (!isCod) {
       // Razorpay flow
       try {
         const { data } = await paymentService.createRazorpayOrder(total);
@@ -148,7 +173,7 @@ export default function CheckoutPage() {
           amount: razorpayOrder.amount,
           currency: "INR",
           order_id: razorpayOrder.id,
-          name: "Eagle Crackers",
+          name: "Elite Eagle Crackers",
           description: "Fireworks Order",
           handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
             try {
@@ -185,15 +210,10 @@ export default function CheckoutPage() {
         toast.error(error.response?.data?.message || "Payment failed");
       }
     } else {
-      // COD or Pay Later — both go through createOrder
-      const method = isPayLater ? "pay_later" : "cod";
-      const result = await dispatch(createOrder({ items, shippingAddress, paymentMethod: method as "cod" | "pay_later", promoCode: appliedPromo?.code }));
+      // COD — no payment to collect up front
+      const result = await dispatch(createOrder({ items, shippingAddress, paymentMethod: "cod", promoCode: appliedPromo?.code }));
       if (createOrder.fulfilled.match(result)) {
-        if (isPayLater) {
-          toast.success("Order placed! Complete payment within 2 days to start packing.");
-        } else {
-          toast.success("Order placed!");
-        }
+        toast.success("Order placed!");
         navigate(`/orders/${(result.payload as { _id: string })._id}`);
       } else {
         toast.error("Order failed");
@@ -271,7 +291,13 @@ export default function CheckoutPage() {
               </button>
             ) : (
               <button onClick={handlePlaceOrder} disabled={loading} className="btn-primary flex-1">
-                {loading ? "Placing order..." : payMethod === "cod" ? "Place Order" : "Pay Now"}
+                {loading
+                  ? "Placing order..."
+                  : payMethod === "upi"
+                    ? "Place Order & Pay"
+                    : payMethod === "cod" || payMethod === "pay_later"
+                      ? "Place Order"
+                      : "Pay Now"}
               </button>
             )}
           </div>

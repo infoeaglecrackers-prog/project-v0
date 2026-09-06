@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster, ToastBar, toast } from "react-hot-toast";
 import { X } from "lucide-react";
 import { useEffect } from "react";
+import { CART_TOAST_CLASS } from "./utils/cartToast";
+import ScrollToTop from "./components/common/ScrollToTop";
 import { useAppDispatch, useAppSelector } from "./hooks/useAppDispatch";
 import { fetchMe, setToken } from "./store/slices/authSlice";
 import { fetchCart } from "./store/slices/cartSlice";
@@ -71,7 +73,9 @@ function AppContent() {
               <>
                 {icon}
                 {message}
-                {t.type !== "loading" && (
+                {/* Cart toasts auto-dismiss in 1.5s — an X you can't realistically
+                    click just adds clutter to a deliberately quiet toast. */}
+                {t.type !== "loading" && !t.className?.includes(CART_TOAST_CLASS) && (
                   <button
                     onClick={() => toast.dismiss(t.id)}
                     aria-label="Dismiss"
@@ -85,6 +89,7 @@ function AppContent() {
           </ToastBar>
         )}
       </Toaster>
+      <ScrollToTop />
       <Routes>
         {/* Admin routes */}
         <Route element={<ProtectedRoute adminOnly />}>

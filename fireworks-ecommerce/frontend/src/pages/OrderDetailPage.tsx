@@ -1,29 +1,30 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { fetchOrderById, cancelOrder } from "../store/slices/orderSlice";
 import { orderService } from "../services/orderService";
-import { paymentService } from "../services/paymentService";
 import OrderTimeline from "../components/order/OrderTimeline";
 import OrderItemList from "../components/order/OrderItemList";
+import UpiPayPanel from "../components/order/UpiPayPanel";
 import Badge from "../components/common/Badge";
 import Loader from "../components/common/Loader";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDate";
 import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "../utils/constants";
-import { ChevronLeft, FileText, Loader2, Clock } from "lucide-react";
+import { ChevronLeft, FileText, Loader2, Clock, ShieldCheck, AlertCircle } from "lucide-react";
 import type { IAddress } from "../types";
 import toast from "react-hot-toast";
-
-declare global { interface Window { Razorpay: new (options: unknown) => { open: () => void }; } }
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { current: order, loading, error } = useAppSelector((s) => s.orders);
+  // Set by the "Pay with Google Pay" button in the payment email — tells the pay
+  // panel to hand off to the UPI app immediately rather than waiting for a tap.
+  const [searchParams] = useSearchParams();
+  const autoPay = searchParams.get("pay") === "1";
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
-  const [payingNow, setPayingNow] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -83,44 +84,6 @@ export default function OrderDetailPage() {
     if (cancelOrder.fulfilled.match(r)) toast.success("Order cancelled");
   };
 
-  const handlePayNow = async () => {
-    if (!order) return;
-    setPayingNow(true);
-    try {
-      const { data } = await paymentService.createRazorpayOrderForExisting(order._id);
-      const { razorpayOrder, key } = data.data;
-      if (!window.Razorpay) {
-        toast.error("Payment gateway failed to load. Check your internet connection and try again.");
-        return;
-      }
-      const rzp = new window.Razorpay({
-        key,
-        amount: razorpayOrder.amount,
-        currency: "INR",
-        order_id: razorpayOrder.id,
-        name: "Eagle Crackers",
-        description: `Payment for Order #${order._id.slice(-8).toUpperCase()}`,
-        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-          try {
-            await paymentService.verifyPayForOrder(order._id, response);
-            toast.success("Payment received! Your order is now being packed 🎉");
-            dispatch(fetchOrderById(order._id));
-          } catch {
-            toast.error("Payment verification failed. Contact support if money was deducted.");
-          }
-        },
-        prefill: { name: (order.shippingAddress as unknown as IAddress)?.fullName, contact: (order.shippingAddress as unknown as IAddress)?.phone },
-        theme: { color: "#c9184a" },
-      });
-      rzp.open();
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Failed to initiate payment");
-    } finally {
-      setPayingNow(false);
-    }
-  };
-
   const handleDownloadInvoice = async () => {
     setDownloadingInvoice(true);
     try {
@@ -162,10 +125,10 @@ export default function OrderDetailPage() {
         <OrderTimeline status={order.orderStatus} />
       </div>
 
-      {/* Pay Later Banner */}
+      {/* Awaiting payment — banner plus the UPI pay panel itself */}
       {order.orderStatus === "AwaitingPayment" && (
-        <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-700 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
+        <div className="mb-6 space-y-4">
+          <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-700 rounded-xl flex items-start gap-3">
             <Clock size={20} className="text-orange-500 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-semibold text-orange-700 dark:text-orange-300">Payment Pending</p>
@@ -176,18 +139,49 @@ export default function OrderDetailPage() {
                     ? new Date(order.paymentDueDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
                     : "2 days from order date"}
                 </strong>{" "}
-                to start packing. Orders without payment will be cancelled automatically.
+                to start packing. Orders without payment will be cancelled.
               </p>
             </div>
           </div>
-          <button
-            onClick={handlePayNow}
-            disabled={payingNow}
-            className="btn-primary flex-shrink-0 flex items-center gap-2 disabled:opacity-60"
-          >
-            {payingNow ? <Loader2 size={15} className="animate-spin" /> : null}
-            {payingNow ? "Processing…" : "Pay Now →"}
-          </button>
+
+          {/* A previous claim was sent back — tell them why before they retry. */}
+          {order.paymentInfo?.rejectionReason && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-xl flex items-start gap-3">
+              <AlertCircle size={20} className="text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-red-700 dark:text-red-300">We couldn't verify your last payment</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-0.5">
+                  {order.paymentInfo.rejectionReason}
+                </p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  Please re-check the reference number and submit it again below.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <UpiPayPanel
+            orderId={order._id}
+            autoLaunch={autoPay}
+            onSubmitted={() => dispatch(fetchOrderById(order._id))}
+          />
+        </div>
+      )}
+
+      {/* Claim submitted — waiting on a human to match it to the bank statement */}
+      {order.orderStatus === "AwaitingVerification" && (
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-xl flex items-start gap-3">
+          <ShieldCheck size={20} className="text-blue-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-blue-700 dark:text-blue-300">Verifying your payment</p>
+            <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5">
+              We've received your reference number
+              {order.paymentInfo?.utr && (
+                <> (<span className="font-mono">{order.paymentInfo.utr}</span>)</>
+              )}{" "}
+              and are matching it against our bank statement. Packing starts as soon as it's confirmed — usually within a few hours during business hours.
+            </p>
+          </div>
         </div>
       )}
 
@@ -204,8 +198,7 @@ export default function OrderDetailPage() {
             <h3 className="font-semibold text-dark dark:text-gray-100 mb-3">Price Details</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Shipping</span><span>{order.shippingPrice === 0 ? "FREE" : formatCurrency(order.shippingPrice || 0)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Tax</span><span>{formatCurrency(taxAmt)}</span></div>
+              <div className="flex justify-between items-start"><span className="text-gray-500 dark:text-gray-400">Shipping</span><span className="text-xs text-gray-400 dark:text-gray-500 text-right max-w-[140px]">Depends on location — paid at collection</span></div>
               <div className="flex justify-between font-semibold text-dark dark:text-gray-100 border-t dark:border-gray-700 pt-2"><span>Total</span><span>{formatCurrency(order.totalAmount)}</span></div>
             </div>
           </div>
@@ -227,7 +220,10 @@ export default function OrderDetailPage() {
               {downloadingInvoice ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
               Invoice
             </button>
-            {["Pending", "Confirmed", "pending", "confirmed"].includes(order.orderStatus) && (
+            {/* AwaitingPayment is cancellable (the backend restores stock);
+                AwaitingVerification deliberately is not — money may already be
+                in flight and an admin needs to resolve it. */}
+            {["Pending", "Confirmed", "pending", "confirmed", "AwaitingPayment"].includes(order.orderStatus) && (
               <button onClick={handleCancel} className="btn-ghost border-red-300 text-red-500 flex-1 text-sm">
                 Cancel
               </button>

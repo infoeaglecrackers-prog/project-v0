@@ -5,6 +5,8 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   pending: "yellow",
   AwaitingPayment: "orange",
   awaitingpayment: "orange",
+  AwaitingVerification: "blue",
+  awaitingverification: "blue",
   confirmed: "blue",
   Confirmed: "blue",
   Processing: "blue",
@@ -21,6 +23,7 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
 
 export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   pending: "yellow",
+  submitted: "blue",
   paid: "green",
   failed: "red",
   refunded: "gray",
@@ -31,9 +34,17 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
 // fresh order is both order-status "Pending" and payment-status "pending".
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: "Unpaid",
+  submitted: "Verifying",
   paid: "Paid",
   failed: "Payment Failed",
   refunded: "Refunded",
+};
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  upi: "UPI / Google Pay",
+  pay_later: "Pay Later (UPI)",
+  razorpay: "Razorpay",
+  cod: "Cash on Delivery",
 };
 
 export const SORT_OPTIONS = [

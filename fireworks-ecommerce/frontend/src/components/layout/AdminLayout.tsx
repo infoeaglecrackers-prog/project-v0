@@ -22,7 +22,10 @@ export default function AdminLayout() {
   const SidebarContent = () => (
     <>
       <div className="p-5 border-b border-gray-800 flex items-center justify-between">
-        <span className="text-white font-bold text-sm">🎆 Admin Panel</span>
+        <div className="flex items-center gap-2">
+          <img src="/logo-dark.png" alt="" className="h-7 w-7 object-contain rounded-full" />
+          <span className="text-white font-bold text-sm">Admin Panel</span>
+        </div>
         <button onClick={closeSidebar} className="text-gray-400 hover:text-white lg:hidden">
           <X size={18} />
         </button>
@@ -84,10 +87,15 @@ export default function AdminLayout() {
           <button onClick={() => setSidebarOpen(true)} className="text-gray-300 hover:text-white">
             <Menu size={22} />
           </button>
-          <span className="font-bold text-sm">🎆 Admin Panel</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo-dark.png" alt="" className="h-7 w-7 object-contain rounded-full" />
+            <span className="font-bold text-sm">Admin Panel</span>
+          </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        {/* data-scroll-container: admin pages scroll here rather than on the
+            window, so ScrollToTop needs to find and reset this element. */}
+        <main data-scroll-container className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>

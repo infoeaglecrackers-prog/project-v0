@@ -1,5 +1,5 @@
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
-const DEFAULT_MESSAGE = "Hi Eagle Crackers 👋, I have a question about your products.";
+const DEFAULT_MESSAGE = "Hi Elite Eagle Crackers 👋, I have a question about your products.";
 
 export default function WhatsAppButton() {
   if (!WHATSAPP_NUMBER) return null; // Not configured yet — hide instead of linking nowhere

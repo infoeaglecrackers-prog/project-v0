@@ -3,18 +3,31 @@ import { useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { fetchProducts, setFilters, fetchCategories } from "../store/slices/productSlice";
 import ProductGrid from "../components/product/ProductGrid";
+import ProductCategoryList from "../components/product/ProductCategoryList";
 import FilterSidebar from "../components/product/FilterSidebar";
 import CartSummaryPanel from "../components/product/CartSummaryPanel";
 import Pagination from "../components/common/Pagination";
-import { SlidersHorizontal, ShoppingCart, X } from "lucide-react";
+import { SlidersHorizontal, ShoppingCart, X, List, LayoutGrid } from "lucide-react";
+
+const VIEW_KEY = "productView";
 
 export default function ProductListPage() {
   const dispatch = useAppDispatch();
-  const { products, loading, pagination, filters } = useAppSelector((s) => s.products);
+  const { products, loading, pagination, filters, categories } = useAppSelector((s) => s.products);
   const cartItemCount = useAppSelector((s) => s.cart.cart?.totalItems ?? 0);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilter, setShowFilter] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
+  // Dense category-grouped list is the default — it's what bulk buyers want.
+  // The card grid stays available and the choice persists across visits.
+  const [view, setView] = useState<"list" | "grid">(
+    () => (localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list")
+  );
+
+  const chooseView = (v: "list" | "grid") => {
+    setView(v);
+    localStorage.setItem(VIEW_KEY, v);
+  };
 
   // Fetch categories once on mount for the filter sidebar
   useEffect(() => { dispatch(fetchCategories()); }, [dispatch]);
@@ -54,6 +67,34 @@ export default function ProductListPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* List / grid view switch */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100 dark:bg-white/[0.06]">
+            <button
+              onClick={() => chooseView("list")}
+              aria-label="Compact list view"
+              aria-pressed={view === "list"}
+              className={`p-1.5 rounded-md transition-colors ${
+                view === "list"
+                  ? "bg-white dark:bg-dark-200 text-primary shadow-sm"
+                  : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              }`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => chooseView("grid")}
+              aria-label="Card grid view"
+              aria-pressed={view === "grid"}
+              className={`p-1.5 rounded-md transition-colors ${
+                view === "grid"
+                  ? "bg-white dark:bg-dark-200 text-primary shadow-sm"
+                  : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              }`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
+
           {/* Mobile filter toggle */}
           <button
             onClick={() => setShowFilter(!showFilter)}
@@ -116,7 +157,11 @@ export default function ProductListPage() {
               </button>
             </div>
           )}
-          <ProductGrid products={products} loading={loading} />
+          {view === "list" ? (
+            <ProductCategoryList products={products} categories={categories} loading={loading} />
+          ) : (
+            <ProductGrid products={products} loading={loading} />
+          )}
           <Pagination
             currentPage={pagination?.currentPage || 1}
             totalPages={pagination?.totalPages || 1}

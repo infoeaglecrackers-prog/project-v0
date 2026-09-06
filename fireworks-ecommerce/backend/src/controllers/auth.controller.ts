@@ -11,7 +11,7 @@ import { resetPasswordTemplate, otpVerificationTemplate } from "../templates/ema
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const BRAND = process.env.FROM_NAME || "Eagle Crackers";
+const BRAND = process.env.FROM_NAME || "Elite Eagle Crackers";
 
 const isProduction = process.env.NODE_ENV === "production";
 

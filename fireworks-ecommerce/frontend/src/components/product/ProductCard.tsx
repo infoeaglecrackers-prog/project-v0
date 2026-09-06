@@ -8,6 +8,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { formatCurrency } from "../../utils/formatCurrency";
 import type { IProduct } from "../../types";
 import toast from "react-hot-toast";
+import { toastAdded, toastIncreased, toastUpdated, toastUnchanged } from "../../utils/cartToast";
 
 interface Props {
   product: IProduct;
@@ -54,7 +55,7 @@ export default function ProductCard({ product }: Props) {
 
     // No change needed
     if (delta === 0) {
-      toast("Already have this quantity in cart!", { icon: "🛒" });
+      toastUnchanged(qty);
       return;
     }
 
@@ -64,15 +65,15 @@ export default function ProductCard({ product }: Props) {
         // First time: add fresh
         const result = await dispatch(addToCart({ productId: product._id, quantity: qty }));
         if (addToCart.rejected.match(result)) throw new Error();
-        toast.success(`${qty} × ${product.name.slice(0, 22)}… added to cart!`);
+        toastAdded(qty, product.name);
       } else {
         // Already in cart: set the absolute new quantity (backend handles the update)
         const result = await dispatch(updateCartQty({ productId: product._id, quantity: qty }));
         if (updateCartQty.rejected.match(result)) throw new Error();
         if (delta > 0) {
-          toast.success(`+${delta} more added! Cart now has ${qty}.`);
+          toastIncreased(delta, qty);
         } else {
-          toast.success(`Cart updated to ${qty}.`);
+          toastUpdated(qty);
         }
       }
       setJustAdded(true);

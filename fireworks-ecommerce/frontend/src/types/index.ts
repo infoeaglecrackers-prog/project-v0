@@ -146,9 +146,19 @@ export interface IAddress {
 }
 
 // ─── Order ────────────────────────────────────────────────────────────────────
-export type OrderStatus = "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled" | "Refunded";
-export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
-export type PaymentMethod = "razorpay" | "cod" | "pay_later";
+export type OrderStatus =
+  | "Pending"
+  | "AwaitingPayment"
+  | "AwaitingVerification"
+  | "Processing"
+  | "Shipped"
+  | "Delivered"
+  | "Cancelled"
+  | "Refunded";
+/** `submitted` = customer reported a UTR, admin hasn't confirmed it yet. */
+export type PaymentStatus = "pending" | "submitted" | "paid" | "failed" | "refunded";
+/** `razorpay`/`cod` only appear on legacy orders, or when RAZORPAY_ENABLED. */
+export type PaymentMethod = "upi" | "pay_later" | "razorpay" | "cod";
 
 export interface IOrderItem {
   _id?: string;
@@ -168,6 +178,15 @@ export interface IOrder {
   shippingAddress: IAddress | Omit<IAddress, "_id" | "user" | "isDefault" | "type">;
   paymentInfo: {
     method: PaymentMethod;
+    /** VPA the payer was asked to send to. */
+    upiVpa?: string;
+    upiRefId?: string;
+    /** 12-digit bank reference reported by the customer. Unverified until paid. */
+    utr?: string;
+    utrSubmittedAt?: string;
+    verifiedAt?: string;
+    /** Why an admin sent the claim back — shown to the customer. */
+    rejectionReason?: string;
     razorpay_order_id?: string;
     razorpay_payment_id?: string;
     status: PaymentStatus;

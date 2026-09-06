@@ -109,7 +109,7 @@ export default function AdminDropPoints() {
             <form onSubmit={handleSave} className="space-y-3">
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Location Name *</label>
-                <input className={inp} placeholder="e.g. Eagle Crackers Main Store" value={form.name}
+                <input className={inp} placeholder="e.g. Elite Eagle Crackers Main Store" value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
               </div>
               <div>
