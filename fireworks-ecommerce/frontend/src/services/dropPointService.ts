@@ -1,4 +1,6 @@
 import api from "./api";
+import { cachedApiCall } from "../utils/cachedApiCall";
+import { CACHE_DURATIONS } from "../utils/apiCache";
 
 export interface IDropPoint {
   _id: string;
@@ -16,9 +18,28 @@ export interface IDropPoint {
 
 export const dropPointService = {
   getActive: (params?: { pincode?: string; city?: string }) =>
-    api.get("/drop-points", { params }),
-  adminGetAll: () => api.get("/drop-points/all"),
-  create: (data: object) => api.post("/drop-points", data),
-  update: (id: string, data: object) => api.put(`/drop-points/${id}`, data),
-  delete: (id: string) => api.delete(`/drop-points/${id}`),
+    cachedApiCall(() => api.get("/drop-points", { params }), {
+      cacheKey: `drop_points_${JSON.stringify(params || {})}`,
+      ttl: CACHE_DURATIONS.DROP_POINTS,
+    }),
+  adminGetAll: () =>
+    cachedApiCall(() => api.get("/drop-points/all"), {
+      cacheKey: "drop_points_all",
+      ttl: CACHE_DURATIONS.DROP_POINTS,
+    }),
+  create: (data: object) =>
+    api.post("/drop-points", data).then(res => {
+      import("../utils/cacheInvalidation").then(m => m.invalidateCache.dropPoints());
+      return res;
+    }),
+  update: (id: string, data: object) =>
+    api.put(`/drop-points/${id}`, data).then(res => {
+      import("../utils/cacheInvalidation").then(m => m.invalidateCache.dropPoints());
+      return res;
+    }),
+  delete: (id: string) =>
+    api.delete(`/drop-points/${id}`).then(res => {
+      import("../utils/cacheInvalidation").then(m => m.invalidateCache.dropPoints());
+      return res;
+    }),
 };
