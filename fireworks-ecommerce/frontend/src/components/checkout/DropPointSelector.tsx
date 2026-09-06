@@ -95,7 +95,7 @@ export default function DropPointSelector({ selectedId, onSelect, pincode, city 
     const params = hasAddress ? { pincode, city } : undefined;
     dropPointService
       .getActive(params)
-      .then((r) => {
+      .then((r: any) => {
         const { nearby = [], sameCity = [], others = [], dropPoints = [] } = r.data.data || {};
         setGrouped({ nearby, sameCity, others });
         setAllPoints(dropPoints);

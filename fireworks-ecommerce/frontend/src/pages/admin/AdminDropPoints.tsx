@@ -20,7 +20,7 @@ export default function AdminDropPoints() {
   const load = () => {
     setLoading(true);
     dropPointService.adminGetAll()
-      .then((r) => setDropPoints(r.data.data?.dropPoints || []))
+      .then((r: any) => setDropPoints(r.data.data?.dropPoints || []))
       .catch(() => toast.error("Failed to load drop points"))
       .finally(() => setLoading(false));
   };
