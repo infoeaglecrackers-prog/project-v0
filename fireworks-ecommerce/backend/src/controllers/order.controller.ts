@@ -123,50 +123,46 @@ export const placeOrder = catchAsync(
       { items: [], totalItems: 0, totalPrice: 0 }
     );
 
-    // Send confirmation email + WhatsApp invoice — both non-blocking, independent of each other
-    if (awaitsPayment) {
-      // Nothing is paid yet, so no invoice — send a payment prompt instead.
-      const dueDate = paymentDueDate!.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-      const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-      // ?pay=1 makes the order page hand straight off to the UPI app on arrival,
-      // which is how the email's button reaches GPay — a raw upi:// href would be
-      // stripped by most mail clients.
-      const payUrl = `${baseUrl}/orders/${order._id}?pay=1`;
+    const queueOrderNotifications = async () => {
+      if (awaitsPayment) {
+        const dueDate = paymentDueDate!.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+        const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const payUrl = `${baseUrl}/orders/${order._id}?pay=1`;
 
-      // Build the QR so desktop readers can scan straight from the email. Best
-      // effort: a missing VPA or QR failure must never break order placement.
-      let qrPng: Buffer | undefined;
-      let upiVpa = "";
-      try {
-        const intent = buildUpiIntent(order._id.toString(), totalAmount);
-        upiVpa = intent.vpa;
-        qrPng = await upiQrBuffer(intent.uri);
-      } catch (err) {
-        console.error("UPI QR for payment email failed:", err);
+        let qrPng: Buffer | undefined;
+        let upiVpa = "";
+        try {
+          const intent = buildUpiIntent(order._id.toString(), totalAmount);
+          upiVpa = intent.vpa;
+          qrPng = await upiQrBuffer(intent.uri);
+        } catch (err) {
+          console.error("UPI QR for payment email failed:", err);
+        }
+
+        const qrCid = qrPng ? "upiqr@elite" : undefined;
+
+        try {
+          await sendEmail({
+            to: req.user!.email,
+            subject: `Your order is reserved — complete payment by ${dueDate}`,
+            html: paymentRequestTemplate(
+              req.user!.name,
+              payUrl,
+              totalAmount,
+              dueDate,
+              upiVpa,
+              qrCid
+            ),
+            attachments: qrPng
+              ? [{ filename: "upi-qr.png", content: qrPng, cid: qrCid, contentType: "image/png" }]
+              : undefined,
+          });
+        } catch (err) {
+          console.error("Payment-request email failed:", err);
+        }
+        return;
       }
 
-      const qrCid = qrPng ? "upiqr@elite" : undefined;
-
-      try {
-        await sendEmail({
-          to: req.user!.email,
-          subject: `Your order is reserved — complete payment by ${dueDate}`,
-          html: paymentRequestTemplate(
-            req.user!.name,
-            payUrl,
-            totalAmount,
-            dueDate,
-            upiVpa,
-            qrCid
-          ),
-          attachments: qrPng
-            ? [{ filename: "upi-qr.png", content: qrPng, cid: qrCid, contentType: "image/png" }]
-            : undefined,
-        });
-      } catch (err) {
-        console.error("Payment-request email failed:", err);
-      }
-    } else {
       let invoicePdf: Buffer | undefined;
       try {
         invoicePdf = await generateInvoicePDF(order, req.user!);
@@ -174,9 +170,6 @@ export const placeOrder = catchAsync(
         console.error("Invoice PDF generation failed:", err);
       }
 
-      // Send the confirmation whether or not the PDF built. Previously this whole
-      // block was nested under `if (invoicePdf)`, so any PDF failure silently
-      // swallowed the customer's confirmation email too.
       try {
         await sendEmail({
           to: req.user!.email,
@@ -202,7 +195,9 @@ export const placeOrder = catchAsync(
           console.error("WhatsApp invoice send failed:", err);
         }
       }
-    }
+    };
+
+    void queueOrderNotifications();
 
     res.status(201).json({
       success: true,

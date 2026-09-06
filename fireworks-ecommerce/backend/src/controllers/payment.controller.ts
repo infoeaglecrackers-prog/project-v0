@@ -322,41 +322,42 @@ export const verifyPayment = catchAsync(
       { items: [], totalItems: 0, totalPrice: 0 }
     );
 
-    // Confirmation email + WhatsApp invoice — both non-blocking, independent of each other
-    let invoicePdf: Buffer | undefined;
-    try {
-      invoicePdf = await generateInvoicePDF(order, req.user!);
-    } catch (err) {
-      console.error("Invoice PDF generation failed:", err);
-    }
-
-    // Send the confirmation even if the PDF failed — the email must not be
-    // hostage to invoice generation.
-    try {
-      await sendEmail({
-        to: req.user!.email,
-        subject: `Order Confirmed — #${order._id}`,
-        html: orderConfirmationTemplate(
-          req.user!.name,
-          order._id.toString(),
-          orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
-          totalAmount
-        ),
-        attachments: invoicePdf
-          ? [{ filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" }]
-          : undefined,
-      });
-    } catch (err) {
-      console.error("Order confirmation email failed:", err);
-    }
-
-    if (invoicePdf && req.user!.phone) {
+    const queueInvoiceNotifications = async () => {
+      let invoicePdf: Buffer | undefined;
       try {
-        await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+        invoicePdf = await generateInvoicePDF(order, req.user!);
       } catch (err) {
-        console.error("WhatsApp invoice send failed:", err);
+        console.error("Invoice PDF generation failed:", err);
       }
-    }
+
+      try {
+        await sendEmail({
+          to: req.user!.email,
+          subject: `Order Confirmed — #${order._id}`,
+          html: orderConfirmationTemplate(
+            req.user!.name,
+            order._id.toString(),
+            orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            totalAmount
+          ),
+          attachments: invoicePdf
+            ? [{ filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" }]
+            : undefined,
+        });
+      } catch (err) {
+        console.error("Order confirmation email failed:", err);
+      }
+
+      if (invoicePdf && req.user!.phone) {
+        try {
+          await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+        } catch (err) {
+          console.error("WhatsApp invoice send failed:", err);
+        }
+      }
+    };
+
+    void queueInvoiceNotifications();
 
     res.status(200).json({
       success: true,
