@@ -14,7 +14,7 @@ type FormData = {
   name: string;
   description: string;
   price: number;
-  originalPrice?: number;
+  discountPrice?: number;
   discountPercent?: number;
   stock: number;
   category: string;
@@ -29,8 +29,8 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
       name: initial?.name || "",
       description: initial?.description || "",
       price: initial?.price || 0,
-      originalPrice: initial?.originalPrice || undefined,
-      discountPercent: initial?.discountPercent || undefined,
+      discountPrice: initial?.discountPrice ?? initial?.originalPrice ?? undefined,
+      discountPercent: initial?.discountPercent ?? undefined,
       stock: initial?.stock || 0,
       category: (initial?.category as unknown as { _id: string })?._id || "",
       isFeatured: initial?.isFeatured || false,
@@ -58,8 +58,8 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
           <input type="number" {...register("price", { required: true, min: 1 })} className="input-field mt-1" />
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Original Price (₹)</label>
-          <input type="number" {...register("originalPrice")} className="input-field mt-1" placeholder="Optional — for a fixed MRP" />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Discount Price / MRP (₹)</label>
+          <input type="number" {...register("discountPrice")} className="input-field mt-1" placeholder="Optional — original/list price" />
         </div>
       </div>
 

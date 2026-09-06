@@ -42,7 +42,7 @@ export default function AdminAddProduct() {
       formData.append("name", data.name as string);
       formData.append("description", data.description as string);
       formData.append("price", data.price as string);
-      if (data.originalPrice) formData.append("originalPrice", data.originalPrice as string);
+      if (data.discountPrice) formData.append("discountPrice", data.discountPrice as string);
       if (data.discountPercent) formData.append("discountPercent", data.discountPercent as string);
       formData.append("stock", data.stock as string);
       formData.append("category", data.category as string);

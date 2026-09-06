@@ -21,8 +21,10 @@ interface OrderItemInput {
 }
 
 const GST_RATE = 0.18;
-const FREE_SHIPPING_THRESHOLD = 999;
-const SHIPPING_CHARGE = 99;
+// Shipping is collected at the point of delivery, not added to the upfront total
+// that the customer pays during checkout.
+const FREE_SHIPPING_THRESHOLD = 0;
+const SHIPPING_CHARGE = 0;
 
 // ─── Self-Hosted UPI Rail ─────────────────────────────────────────────────────
 // No aggregator, so no webhook and no signature to check. The customer pays into
@@ -273,7 +275,7 @@ export const verifyPayment = catchAsync(
     const taxableAmount = itemsPrice - discountAmount;
     const taxAmount = parseFloat((taxableAmount * GST_RATE).toFixed(2));
     const shippingPrice = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-    const totalAmount = parseFloat((taxableAmount + taxAmount + shippingPrice).toFixed(2));
+    const totalAmount = parseFloat((taxableAmount + taxAmount).toFixed(2));
 
     const order = await Order.create({
       user: req.user!._id,

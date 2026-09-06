@@ -12,10 +12,21 @@ const PRODUCTS_PER_PAGE = 12;
 // original price from it so the existing price-vs-originalPrice discount
 // badge (ProductCard/ProductDetailPage) reflects it automatically.
 const applyDiscountPercent = (body: Record<string, unknown>) => {
-  const discountPercent = Number(body.discountPercent);
   const price = Number(body.price);
-  if (discountPercent > 0 && discountPercent < 100 && price > 0 && !body.originalPrice) {
-    body.originalPrice = Math.round(price / (1 - discountPercent / 100));
+  const discountPercent = Number(body.discountPercent);
+  const discountPriceRaw = body.discountPrice ?? body.originalPrice;
+
+  if (discountPriceRaw !== undefined && discountPriceRaw !== null && discountPriceRaw !== "") {
+    const discountPrice = Number(discountPriceRaw);
+    if (discountPrice > 0 && price > 0 && !body.discountPercent) {
+      body.discountPercent = Math.round(((discountPrice - price) / discountPrice) * 100);
+    }
+    body.discountPrice = discountPrice;
+    return;
+  }
+
+  if (discountPercent > 0 && discountPercent < 100 && price > 0) {
+    body.discountPrice = Math.round(price / (1 - discountPercent / 100));
   }
 };
 
