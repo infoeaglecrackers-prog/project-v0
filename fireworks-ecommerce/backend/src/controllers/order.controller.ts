@@ -12,7 +12,7 @@ import { resolvePromoDiscount } from "../utils/applyPromo";
 import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
 import { IOrderItem, PaymentMethod } from "../models/Order";
 
-const GST_RATE = 0.18;
+const GST_RATE = 0;
 // Shipping is collected at the point of delivery, not added to the upfront total
 // that the customer pays during checkout.
 const FREE_SHIPPING_THRESHOLD = 0;

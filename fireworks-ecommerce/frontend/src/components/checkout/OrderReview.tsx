@@ -125,7 +125,7 @@ export default function OrderReview({
         )}
         <div className="flex justify-between items-start"><span className="text-gray-500 dark:text-gray-400">Shipping</span><span className="text-right text-xs text-gray-400 dark:text-gray-500 max-w-[160px]">Depends on location — paid at collection</span></div>
         {pricing.tax > 0 && (
-          <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">GST (18%)</span><span>{formatCurrency(pricing.tax)}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">GST (0%)</span><span>{formatCurrency(pricing.tax)}</span></div>
         )}
         <div className="flex justify-between font-semibold text-dark dark:text-gray-100 text-base pt-1 border-t dark:border-gray-700">
           <span>Total</span><span>{formatCurrency(total)}</span>

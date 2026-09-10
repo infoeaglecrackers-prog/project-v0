@@ -49,7 +49,7 @@ export default function CheckoutPage() {
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPercent: number; discountAmount: number } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
-  const GST_RATE = 0.18;
+  const GST_RATE = 0;
   const FREE_SHIPPING_THRESHOLD = 0;
   const SHIPPING_CHARGE = 0;
 
