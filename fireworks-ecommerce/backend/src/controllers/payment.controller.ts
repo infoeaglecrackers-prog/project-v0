@@ -34,7 +34,9 @@ const SHIPPING_CHARGE = 0;
 /** Hands the checkout the `upi://pay` deep link + QR for an unpaid order. */
 export const getUpiIntent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const order = await Order.findById(req.params.orderId);
+    const order = await Order.findById(req.params.orderId).select(
+      "_id user orderStatus paymentInfo totalAmount paymentDueDate"
+    );
     if (!order) return next(new AppError("Order not found.", 404));
 
     if (order.user.toString() !== req.user!._id.toString()) {
@@ -253,8 +255,13 @@ export const verifyPayment = catchAsync(
     const orderItems: IOrderItem[] = [];
     let itemsPrice = 0;
 
+    const products = await Product.find({ _id: { $in: items.map((i) => i.productId) } }).select(
+      "_id name price discountPrice stock images"
+    );
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
     for (const item of items) {
-      const product = await Product.findById(item.productId);
+      const product = productMap.get(item.productId);
       if (!product) return next(new AppError(`Product not found: ${item.productId}`, 404));
       if (item.quantity > product.stock) {
         return next(new AppError(`Insufficient stock for: ${product.name}`, 400));
@@ -370,7 +377,9 @@ export const verifyPayment = catchAsync(
 // ─── Create Razorpay Order for Pay-Later Order ────────────────────────────────
 export const createRazorpayOrderForExisting = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const order = await Order.findById(req.params.orderId);
+    const order = await Order.findById(req.params.orderId).select(
+      "_id user orderStatus totalAmount paymentDueDate"
+    );
     if (!order) return next(new AppError("Order not found.", 404));
 
     if (order.user.toString() !== req.user!._id.toString()) {

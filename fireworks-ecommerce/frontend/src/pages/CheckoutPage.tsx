@@ -49,12 +49,16 @@ export default function CheckoutPage() {
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPercent: number; discountAmount: number } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
+  const GST_RATE = 0.18;
+  const FREE_SHIPPING_THRESHOLD = 0;
+  const SHIPPING_CHARGE = 0;
+
   const subtotal = cart?.totalPrice || 0;
   const discountAmount = appliedPromo?.discountAmount || 0;
   const taxableAmount = subtotal - discountAmount;
-  const shipping = 0;
-  const tax = 0;
-  const total = Math.round((taxableAmount + shipping) * 100) / 100;
+  const shipping = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
+  const tax = Math.round(taxableAmount * GST_RATE * 100) / 100;
+  const total = Math.round((taxableAmount + tax) * 100) / 100;
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;

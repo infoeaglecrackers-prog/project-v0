@@ -6,7 +6,10 @@ import catchAsync from "../utils/catchAsync";
 // ─── Get All Addresses ────────────────────────────────────────────────────────
 export const getAddresses = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
-    const addresses = await Address.find({ user: req.user!._id }).sort("-isDefault");
+    const addresses = await Address.find({ user: req.user!._id })
+      .select("_id fullName phone addressLine1 addressLine2 city state pincode country isDefault")
+      .sort("-isDefault")
+      .lean();
     res.status(200).json({ success: true, data: { addresses } });
   }
 );

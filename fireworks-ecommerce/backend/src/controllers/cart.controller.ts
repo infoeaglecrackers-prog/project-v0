@@ -23,7 +23,7 @@ export const addToCart = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { productId, quantity } = req.body;
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).select("_id name price discountPrice images stock isActive");
     if (!product || !product.isActive) {
       return next(new AppError("Product not found.", 404));
     }
@@ -61,6 +61,7 @@ export const addToCart = catchAsync(
       "items.product",
       "name price discountPrice images stock"
     );
+
     res.status(200).json({
       success: true,
       message: "Item added to cart",
@@ -75,9 +76,13 @@ export const updateCartItem = catchAsync(
     const { quantity } = req.body;
     const { productId } = req.params;
 
-    const product = await Product.findById(productId);
+    if (quantity < 0) {
+      return next(new AppError("Quantity cannot be negative.", 400));
+    }
+
+    const product = await Product.findById(productId).select("_id stock price discountPrice");
     if (!product) return next(new AppError("Product not found.", 404));
-    if (quantity > product.stock) {
+    if (quantity > 0 && quantity > product.stock) {
       return next(new AppError(`Insufficient stock. Only ${product.stock} left.`, 400));
     }
 
@@ -87,8 +92,12 @@ export const updateCartItem = catchAsync(
     const item = cart.items.find((i) => i.product.toString() === productId);
     if (!item) return next(new AppError("Item not in cart.", 404));
 
-    item.quantity = quantity;
-    item.price = product.discountPrice ?? product.price;
+    if (quantity === 0) {
+      cart.items = cart.items.filter((i) => i.product.toString() !== productId);
+    } else {
+      item.quantity = quantity;
+      item.price = product.discountPrice ?? product.price;
+    }
     await cart.save();
 
     const populated = await Cart.findById(cart._id).populate(
