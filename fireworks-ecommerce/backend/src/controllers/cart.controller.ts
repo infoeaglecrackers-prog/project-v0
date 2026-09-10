@@ -23,15 +23,17 @@ export const addToCart = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { productId, quantity } = req.body;
 
-    const product = await Product.findById(productId).select("_id name price discountPrice images stock isActive");
+    // Product lookup and cart lookup don't depend on each other — run them
+    // concurrently instead of back-to-back round trips.
+    const [product, existingCart] = await Promise.all([
+      Product.findById(productId).select("_id name price discountPrice images stock isActive"),
+      Cart.findOne({ user: req.user!._id }),
+    ]);
     if (!product || !product.isActive) {
       return next(new AppError("Product not found.", 404));
     }
 
-    let cart = await Cart.findOne({ user: req.user!._id });
-    if (!cart) {
-      cart = await Cart.create({ user: req.user!._id, items: [] });
-    }
+    const cart = existingCart ?? new Cart({ user: req.user!._id, items: [] });
 
     const existingItem = cart.items.find(
       (item) => item.product.toString() === productId
@@ -57,15 +59,14 @@ export const addToCart = catchAsync(
 
     await cart.save();
 
-    const populated = await Cart.findById(cart._id).populate(
-      "items.product",
-      "name price discountPrice images stock"
-    );
+    // Populate the in-memory doc we already have instead of re-fetching the
+    // cart from scratch — saves a full DB round trip on the hot path.
+    await cart.populate("items.product", "name price discountPrice images stock");
 
     res.status(200).json({
       success: true,
       message: "Item added to cart",
-      data: { cart: populated },
+      data: { cart },
     });
   }
 );
@@ -80,19 +81,21 @@ export const updateCartItem = catchAsync(
       return next(new AppError("Quantity cannot be negative.", 400));
     }
 
-    const product = await Product.findById(productId).select("_id stock price discountPrice");
+    const [product, cart] = await Promise.all([
+      Product.findById(productId).select("_id stock price discountPrice"),
+      Cart.findOne({ user: req.user!._id }),
+    ]);
     if (!product) return next(new AppError("Product not found.", 404));
     if (quantity > 0 && quantity > product.stock) {
       return next(new AppError(`Insufficient stock. Only ${product.stock} left.`, 400));
     }
-
-    const cart = await Cart.findOne({ user: req.user!._id });
     if (!cart) return next(new AppError("Cart not found.", 404));
 
     const item = cart.items.find((i) => i.product.toString() === productId);
     if (!item) return next(new AppError("Item not in cart.", 404));
 
     if (quantity === 0) {
+      // 0 means "unselect it" — drop the line instead of erroring.
       cart.items = cart.items.filter((i) => i.product.toString() !== productId);
     } else {
       item.quantity = quantity;
@@ -100,14 +103,11 @@ export const updateCartItem = catchAsync(
     }
     await cart.save();
 
-    const populated = await Cart.findById(cart._id).populate(
-      "items.product",
-      "name price discountPrice images stock"
-    );
+    await cart.populate("items.product", "name price discountPrice images stock");
     res.status(200).json({
       success: true,
       message: "Cart updated",
-      data: { cart: populated },
+      data: { cart },
     });
   }
 );
@@ -123,14 +123,11 @@ export const removeFromCart = catchAsync(
     );
     await cart.save();
 
-    const populated = await Cart.findById(cart._id).populate(
-      "items.product",
-      "name price discountPrice images stock"
-    );
+    await cart.populate("items.product", "name price discountPrice images stock");
     res.status(200).json({
       success: true,
       message: "Item removed from cart",
-      data: { cart: populated },
+      data: { cart },
     });
   }
 );

@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import mongoSanitize from "express-mongo-sanitize";
 import rateLimit from "express-rate-limit";
@@ -34,6 +35,27 @@ dotenv.config();
 connectDB();
 
 const app: Application = express();
+
+// ─── Perf: gzip all JSON/text responses — cuts transfer time on product/order lists
+app.use(compression());
+
+// ─── Perf: per-request latency, surfaced as a header and logged if it blows the
+// 30–300ms API budget. Header must be set before the response flushes, so this
+// patches res.end (like the `response-time` package) rather than using the
+// `finish` event, which fires after headers are already sent.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  const originalEnd = res.end.bind(res);
+  res.end = ((...args: Parameters<typeof res.end>) => {
+    const ms = Date.now() - start;
+    if (!res.headersSent) res.setHeader("X-Response-Time", `${ms}ms`);
+    if (ms > 300) {
+      console.warn(`⚠️  SLOW ${req.method} ${req.originalUrl} — ${ms}ms`);
+    }
+    return originalEnd(...args);
+  }) as typeof res.end;
+  next();
+});
 
 // ─── Security Middlewares ───────────────────────────────────────────────────
 app.use(helmet());

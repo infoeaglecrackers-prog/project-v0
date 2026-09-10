@@ -63,7 +63,7 @@ export default function ProductCard({ product }: Props) {
     try {
       if (cartQty === 0) {
         // First time: add fresh
-        const result = await dispatch(addToCart({ productId: product._id, quantity: qty }));
+        const result = await dispatch(addToCart({ productId: product._id, quantity: qty, product }));
         if (addToCart.rejected.match(result)) throw new Error();
         toastAdded(qty, product.name);
       } else {

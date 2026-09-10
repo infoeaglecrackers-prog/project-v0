@@ -59,7 +59,7 @@ export default function ProductRow({ product }: Props) {
 
     setBusy(true);
     try {
-      const result = await dispatch(addToCart({ productId: product._id, quantity: 1 }));
+      const result = await dispatch(addToCart({ productId: product._id, quantity: 1, product }));
       if (addToCart.rejected.match(result)) throw new Error();
       toastAdded(1, product.name);
       setJustAdded(true);

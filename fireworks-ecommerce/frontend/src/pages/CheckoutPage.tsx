@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { createOrder } from "../store/slices/orderSlice";
 import { fetchCart } from "../store/slices/cartSlice";
+import { fetchAddresses, addAddress, updateAddress, deleteAddress } from "../store/slices/addressSlice";
 import AddressList from "../components/checkout/AddressList";
 import AddressForm from "../components/checkout/AddressForm";
 import PaymentOptions from "../components/checkout/PaymentOptions";
 import OrderReview from "../components/checkout/OrderReview";
 import DropPointSelector from "../components/checkout/DropPointSelector";
 import Modal from "../components/common/Modal";
-import { addressService } from "../services/addressService";
 import { paymentService } from "../services/paymentService";
 import { promoService } from "../services/promoService";
 import type { IAddress } from "../types";
@@ -37,8 +37,8 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cart } = useCart();
   const { loading } = useAppSelector((s) => s.orders);
+  const addresses = useAppSelector((s) => s.address.addresses);
   const [step, setStep] = useState(0);
-  const [addresses, setAddresses] = useState<IAddress[]>([]);
   const [selectedAddr, setSelectedAddr] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("upi");
   const [addrModal, setAddrModal] = useState(false);
@@ -57,8 +57,11 @@ export default function CheckoutPage() {
   const discountAmount = appliedPromo?.discountAmount || 0;
   const taxableAmount = subtotal - discountAmount;
   const shipping = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-  const tax = Math.round(taxableAmount * GST_RATE * 100) / 100;
-  const total = Math.round((taxableAmount + tax) * 100) / 100;
+  // Mirrors the backend exactly (order.controller.ts / payment.controller.ts use
+  // parseFloat(x.toFixed(2))) so the checkout bill never drifts from the amount
+  // the order is actually created with — that drift was the QR/bill mismatch.
+  const tax = parseFloat((taxableAmount * GST_RATE).toFixed(2));
+  const total = parseFloat((taxableAmount + tax).toFixed(2));
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;
@@ -83,30 +86,38 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     dispatch(fetchCart());
-    addressService.getAll().then((r) => {
-      setAddresses(r.data.data?.addresses || []);
-      const def = r.data.data?.addresses?.find((a: IAddress) => a.isDefault);
-      if (def) setSelectedAddr(def._id);
-    }).catch(() => {});
+    // Cached addresses (localStorage + Redux) paint instantly; this only hits
+    // the network the first time this session — see fetchAddresses' condition.
+    dispatch(fetchAddresses());
   }, [dispatch]);
+
+  // Default the selection once addresses are available, whether that's from
+  // the instant cache or the background fetch resolving.
+  useEffect(() => {
+    if (selectedAddr || addresses.length === 0) return;
+    const def = addresses.find((a) => a.isDefault) || addresses[0];
+    setSelectedAddr(def._id);
+  }, [addresses, selectedAddr]);
 
   const handleAddrSave = async (data: Omit<IAddress, "_id">) => {
     try {
       if (editAddr) {
-        await addressService.update(editAddr._id, data);
+        await dispatch(updateAddress({ id: editAddr._id, data })).then((r) => {
+          if (updateAddress.rejected.match(r)) throw new Error();
+        });
       } else {
-        await addressService.add(data);
+        await dispatch(addAddress(data)).then((r) => {
+          if (addAddress.rejected.match(r)) throw new Error();
+        });
       }
-      const r = await addressService.getAll();
-      setAddresses(r.data.data?.addresses || []);
       setAddrModal(false);
       toast.success("Address saved!");
     } catch { toast.error("Failed to save address"); }
   };
 
   const handleDeleteAddr = async (id: string) => {
-    await addressService.delete(id);
-    setAddresses((prev) => prev.filter((a) => a._id !== id));
+    await dispatch(deleteAddress(id));
+    if (selectedAddr === id) setSelectedAddr(null);
   };
 
   const handlePlaceOrder = async () => {

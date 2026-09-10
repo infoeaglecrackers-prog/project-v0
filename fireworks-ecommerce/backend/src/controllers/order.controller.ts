@@ -33,12 +33,18 @@ export const placeOrder = catchAsync(
       promoCode?: string;
     };
 
-    // Fetch all products and validate stock
+    // Fetch all products in one round trip instead of one findById per cart
+    // line — a 5-item cart previously meant 5 sequential queries here.
     const orderItems: IOrderItem[] = [];
     let itemsPrice = 0;
 
+    const products = await Product.find({ _id: { $in: items.map((i) => i.productId) } }).select(
+      "_id name price discountPrice stock images isActive"
+    );
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
     for (const item of items) {
-      const product = await Product.findById(item.productId);
+      const product = productMap.get(item.productId);
       if (!product || !product.isActive) {
         return next(new AppError(`Product not found: ${item.productId}`, 404));
       }
@@ -218,7 +224,7 @@ export const getMyOrders = catchAsync(
     if (req.query.status) filter.orderStatus = req.query.status;
 
     const [orders, total] = await Promise.all([
-      Order.find(filter).sort("-createdAt").skip(skip).limit(limit),
+      Order.find(filter).sort("-createdAt").skip(skip).limit(limit).lean(),
       Order.countDocuments(filter),
     ]);
 

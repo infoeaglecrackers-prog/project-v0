@@ -45,13 +45,13 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) { navigate("/login"); return; }
-    await dispatch(addToCart({ productId: product._id, quantity: qty }));
+    await dispatch(addToCart({ productId: product._id, quantity: qty, product }));
     toastAdded(qty, product.name);
   };
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) { navigate("/login"); return; }
-    await dispatch(addToCart({ productId: product._id, quantity: qty }));
+    await dispatch(addToCart({ productId: product._id, quantity: qty, product }));
     navigate("/cart");
   };
 

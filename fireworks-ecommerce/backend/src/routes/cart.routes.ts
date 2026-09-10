@@ -29,7 +29,8 @@ router.post(
 router.put(
   "/:productId",
   [
-    body("quantity").isInt({ min: 1 }).withMessage("Quantity must be at least 1"),
+    // 0 is allowed here — it means "remove this item" (see updateCartItem).
+    body("quantity").isInt({ min: 0 }).withMessage("Quantity cannot be negative"),
   ],
   validate,
   updateCartItem
