@@ -59,7 +59,7 @@ const ProductSchema = new Schema<IProduct>(
       min: [0, "Discount percent cannot be negative"],
       max: [99, "Discount percent cannot exceed 99"],
     },
-    gst: { type: Number, default: 18 },
+    gst: { type: Number, default: 0 },
     stock: {
       type: Number,
       required: [true, "Stock is required"],
