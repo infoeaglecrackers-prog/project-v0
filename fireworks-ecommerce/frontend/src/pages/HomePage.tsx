@@ -5,6 +5,7 @@ import { fetchFeatured, fetchBestSellers } from "../store/slices/productSlice";
 import ProductGrid from "../components/product/ProductGrid";
 import { ArrowRight, Zap } from "lucide-react";
 import FireworksCanvas, { type FireworksHandle } from "../components/common/FireworksCanvas";
+import { Seo, seoAbsoluteUrl, siteName } from "../components/common/Seo";
 
 export default function HomePage() {
   const dispatch = useAppDispatch();
@@ -23,6 +24,34 @@ export default function HomePage() {
 
   return (
     <main>
+      <Seo
+        title="Elite Eagle Crackers - Buy Certified Fireworks Online"
+        description="Shop PESO certified fireworks and crackers for Diwali, weddings, New Year, and festival celebrations with Elite Eagle Crackers."
+        path="/"
+        keywords={["buy crackers online", "online fireworks store India", "festival crackers sale"]}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: siteName,
+            url: seoAbsoluteUrl("/"),
+            logo: seoAbsoluteUrl("/logo-dark.png"),
+            email: "info@eaglecrackers.com",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: siteName,
+            url: seoAbsoluteUrl("/"),
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${seoAbsoluteUrl("/products")}?keyword={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          },
+        ]}
+      />
+
       {/* ── ANNOUNCEMENT TICKER ──────────────────────────────── */}
       <div className="overflow-hidden py-2.5" style={{ background: "linear-gradient(90deg, #ac113d 0%, #c9184a 40%, #e02b6a 60%, #c9184a 80%, #ac113d 100%)" }}>
         <div className="flex animate-ticker whitespace-nowrap select-none">

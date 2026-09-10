@@ -9,6 +9,7 @@ import StarRating from "../components/common/StarRating";
 import ReviewCard from "../components/product/ReviewCard";
 import Loader from "../components/common/Loader";
 import Modal from "../components/common/Modal";
+import { Seo, seoAbsoluteUrl } from "../components/common/Seo";
 import { Heart, ShoppingCart, Minus, Plus } from "lucide-react";
 import { formatCurrency } from "../utils/formatCurrency";
 import { useAuth } from "../hooks/useAuth";
@@ -42,6 +43,38 @@ export default function ProductDetailPage() {
 
   const isWishlisted = wishlistIds.includes(product._id);
   const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+  const categoryName = (product.category as unknown as { name?: string })?.name;
+  const productDescription = product.description || `Buy ${product.name} from Elite Eagle Crackers.`;
+  const primaryImage = product.images?.[0]?.url || "/logo-dark.png";
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: productDescription,
+    image: product.images?.map((img) => seoAbsoluteUrl(img.url)) || [],
+    sku: product.sku || product._id,
+    brand: {
+      "@type": "Brand",
+      name: product.brand || "Elite Eagle Crackers",
+    },
+    category: categoryName,
+    aggregateRating:
+      product.numReviews > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: product.ratings || 0,
+            reviewCount: product.numReviews,
+          }
+        : undefined,
+    offers: {
+      "@type": "Offer",
+      url: seoAbsoluteUrl(`/products/${product._id}`),
+      priceCurrency: "INR",
+      price: product.price,
+      availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) { navigate("/login"); return; }
@@ -70,11 +103,20 @@ export default function ProductDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <Seo
+        title={`${product.name} - Buy Fireworks Online`}
+        description={productDescription}
+        path={`/products/${product._id}`}
+        image={primaryImage}
+        type="product"
+        keywords={[product.name, categoryName || "", product.brand || "", ...(product.tags || [])].filter(Boolean)}
+        jsonLd={productJsonLd}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <ProductImageGallery images={product.images || []} name={product.name} />
 
         <div>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-1">{(product.category as unknown as { name: string })?.name}</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-1">{categoryName}</p>
           <h1 className="text-2xl font-bold text-dark dark:text-gray-100 mb-2">{product.name}</h1>
 
           <div className="flex items-center gap-2 mb-4">

@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+Disallow: /profile
+Disallow: /wishlist
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://www.eliteeaglecrackers.com/sitemap.xml

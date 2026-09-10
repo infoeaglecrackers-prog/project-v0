@@ -7,6 +7,7 @@ import ProductCategoryList from "../components/product/ProductCategoryList";
 import FilterSidebar from "../components/product/FilterSidebar";
 import CartSummaryPanel from "../components/product/CartSummaryPanel";
 import Pagination from "../components/common/Pagination";
+import { Seo } from "../components/common/Seo";
 import { SlidersHorizontal, ShoppingCart, X, List, LayoutGrid } from "lucide-react";
 
 const VIEW_KEY = "productView";
@@ -56,6 +57,12 @@ export default function ProductListPage() {
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 py-8">
+      <Seo
+        title="Fireworks and Crackers Online"
+        description="Browse certified sparklers, rockets, flower pots, chakkars, gift boxes, and festival crackers from Elite Eagle Crackers."
+        path={`/products${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+        keywords={["sparklers", "rockets", "flower pots", "firework gift boxes", "chakkars"]}
+      />
 
       {/* ── Page header ───────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
