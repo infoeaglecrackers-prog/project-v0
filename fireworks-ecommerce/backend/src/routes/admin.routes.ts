@@ -5,6 +5,7 @@ import {
   getAllOrders,
   getOrderDetail,
   updateOrderStatus,
+  updatePaymentStatus,
   verifyUpiPayment,
   rejectUpiPayment,
   getAllUsers,
@@ -48,6 +49,17 @@ router.put(
   ],
   validate,
   updateOrderStatus
+);
+
+router.put(
+  "/orders/:id/payment",
+  [
+    body("status")
+      .isIn(["paid", "pending", "failed"])
+      .withMessage("Invalid payment status"),
+  ],
+  validate,
+  updatePaymentStatus
 );
 
 // ─── UPI Payment Verification ──────────────────────────────────────────────────

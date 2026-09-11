@@ -210,6 +210,54 @@ export const updateOrderStatus = catchAsync(
   }
 );
 
+// ─── Update Payment Status (Paid Confirmation) ────────────────────────────────
+export const updatePaymentStatus = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { status } = req.body as { status: "paid" | "pending" | "failed" };
+
+    const validStatuses = ["paid", "pending", "failed"];
+    if (!validStatuses.includes(status)) {
+      return next(new AppError("Invalid payment status.", 400));
+    }
+
+    const order = await Order.findById(req.params.id).populate("user", "name email");
+    if (!order) return next(new AppError("Order not found.", 404));
+
+    const oldStatus = order.paymentInfo.status;
+    order.paymentInfo.status = status;
+    if (status === "paid") {
+      order.paymentInfo.paidAt = new Date();
+    }
+    await order.save();
+
+    // Send email notification
+    const user = order.user as unknown as { name: string; email: string };
+    if (status === "paid" && oldStatus !== "paid") {
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: `Payment Confirmed — Order #${order._id.toString().slice(-8).toUpperCase()}`,
+          html: `
+            <h2>Payment Confirmed</h2>
+            <p>Hi ${user.name},</p>
+            <p>Your payment for order <strong>#${order._id.toString().slice(-8).toUpperCase()}</strong> has been confirmed.</p>
+            <p>We will start processing your order right away.</p>
+            <p>Thank you for your purchase!</p>
+          `,
+        });
+      } catch (err) {
+        console.error("Payment confirmation email failed:", err);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Payment status updated to ${status}`,
+      data: { order },
+    });
+  }
+);
+
 // ─── Verify a Self-Hosted UPI Payment ─────────────────────────────────────────
 // The only path that can mark a UPI order paid. There is no gateway callback, so
 // this is a human asserting the money is on the bank statement.

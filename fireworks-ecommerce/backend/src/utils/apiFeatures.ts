@@ -54,7 +54,8 @@ class ApiFeatures<T> {
       const sortBy = (this.queryStr.sort as string).split(",").join(" ");
       this.query = this.query.sort(sortBy);
     } else {
-      this.query = this.query.sort("-createdAt");
+      // Default: sort by price ascending (cheapest first) for product lists
+      this.query = this.query.sort("price");
     }
     return this;
   }

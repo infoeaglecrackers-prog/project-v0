@@ -9,11 +9,12 @@ import { ChevronRight } from "lucide-react";
 interface Props {
   orders: IOrder[];
   onStatusChange?: (orderId: string, status: string) => void;
+  onPaymentStatusChange?: (orderId: string, status: string) => void;
 }
 
 const STATUS_OPTIONS = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"];
 
-export default function OrderTable({ orders, onStatusChange }: Props) {
+export default function OrderTable({ orders, onStatusChange, onPaymentStatusChange }: Props) {
   if (!orders.length) {
     return <div className="py-12 text-center text-gray-400 dark:text-gray-500">No orders found</div>;
   }
@@ -25,7 +26,7 @@ export default function OrderTable({ orders, onStatusChange }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-gray-700">
-              {["Order ID", "Customer", "Date", "Amount", "Payment", "Status", "Action"].map((h) => (
+              {["Order ID", "Customer", "Date", "Amount", "Payment", "Paid", "Status", "Action"].map((h) => (
                 <th key={h} className="py-3 px-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{h}</th>
               ))}
             </tr>
@@ -41,9 +42,27 @@ export default function OrderTable({ orders, onStatusChange }: Props) {
                 <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{formatDate(order.createdAt)}</td>
                 <td className="py-3 px-4 font-medium dark:text-gray-200">{formatCurrency(order.totalAmount)}</td>
                 <td className="py-3 px-4">
+                  {onPaymentStatusChange ? (
+                    <select
+                      value={order.paymentInfo?.status || "pending"}
+                      onChange={(e) => onPaymentStatusChange(order._id, e.target.value)}
+                      className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-2 py-1 text-xs"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                  ) : (
+                    <Badge
+                      label={PAYMENT_STATUS_LABELS[order.paymentInfo?.status || order.paymentStatus] || order.paymentInfo?.status || order.paymentStatus}
+                      color={PAYMENT_STATUS_COLORS[order.paymentInfo?.status || order.paymentStatus] as "green" | "red" | "yellow" | "blue" | "gray"}
+                    />
+                  )}
+                </td>
+                <td className="py-3 px-4">
                   <Badge
-                    label={PAYMENT_STATUS_LABELS[order.paymentInfo?.status || order.paymentStatus] || order.paymentInfo?.status || order.paymentStatus}
-                    color={PAYMENT_STATUS_COLORS[order.paymentInfo?.status || order.paymentStatus] as "green" | "red" | "yellow" | "blue" | "gray"}
+                    label={order.paymentInfo?.status === "paid" ? "✓ Paid" : "Unpaid"}
+                    color={order.paymentInfo?.status === "paid" ? "green" : "gray"}
                   />
                 </td>
                 <td className="py-3 px-4">
@@ -93,11 +112,23 @@ export default function OrderTable({ orders, onStatusChange }: Props) {
               <span className="font-semibold text-dark dark:text-gray-100">{formatCurrency(order.totalAmount)}</span>
             </div>
 
-            <div className="flex items-center justify-between gap-3">
-              <Badge
-                label={PAYMENT_STATUS_LABELS[order.paymentInfo?.status || order.paymentStatus] || order.paymentInfo?.status || order.paymentStatus}
-                color={PAYMENT_STATUS_COLORS[order.paymentInfo?.status || order.paymentStatus] as "green" | "red" | "yellow" | "blue" | "gray"}
-              />
+            <div className="flex items-center justify-between gap-2">
+              {onPaymentStatusChange ? (
+                <select
+                  value={order.paymentInfo?.status || "pending"}
+                  onChange={(e) => onPaymentStatusChange(order._id, e.target.value)}
+                  className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-2 py-1.5 text-xs flex-1"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="failed">Failed</option>
+                </select>
+              ) : (
+                <Badge
+                  label={PAYMENT_STATUS_LABELS[order.paymentInfo?.status || order.paymentStatus] || order.paymentInfo?.status || order.paymentStatus}
+                  color={PAYMENT_STATUS_COLORS[order.paymentInfo?.status || order.paymentStatus] as "green" | "red" | "yellow" | "blue" | "gray"}
+                />
+              )}
               {onStatusChange ? (
                 <select
                   value={order.orderStatus}

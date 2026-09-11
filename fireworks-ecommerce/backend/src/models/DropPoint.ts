@@ -4,6 +4,7 @@ export interface IDropPoint extends Document {
   name: string;
   addressLine1: string;
   addressLine2?: string;
+  district?: string;
   city: string;
   state: string;
   pincode: string;
@@ -20,6 +21,7 @@ const DropPointSchema = new Schema<IDropPoint>(
     name: { type: String, required: [true, "Drop point name is required"], trim: true },
     addressLine1: { type: String, required: [true, "Address line 1 is required"] },
     addressLine2: { type: String },
+    district: { type: String },
     city: { type: String, required: [true, "City is required"] },
     state: { type: String, required: [true, "State is required"] },
     pincode: { type: String, required: [true, "Pincode is required"] },

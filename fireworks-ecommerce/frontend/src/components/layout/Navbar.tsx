@@ -38,31 +38,28 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 nav-glass">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 h-16 sm:h-18 md:h-20 flex items-center justify-between gap-3 sm:gap-4">
 
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0 group">
+        {/* Logo - 4:1 aspect ratio, responsive sizing */}
+        <Link to="/" className="flex items-center shrink-0 group">
           {logoError ? (
-            <span className="text-2xl animate-bounce-soft">🎆</span>
+            <span className="text-3xl sm:text-4xl animate-bounce-soft">🎆</span>
           ) : (
             <>
               <img
                 src="/logo-light.png"
-                alt=""
-                className="h-10 w-10 object-contain rounded-full dark:hidden"
+                alt="Elite Eagle Crackers"
+                className="h-12 w-48 sm:h-14 sm:w-56 md:h-16 md:w-64 object-contain dark:hidden transition-all duration-200"
                 onError={() => setLogoError(true)}
               />
               <img
                 src="/logo-dark.png"
-                alt=""
-                className="h-10 w-10 object-contain rounded-full hidden dark:block"
+                alt="Elite Eagle Crackers"
+                className="h-12 w-48 sm:h-14 sm:w-56 md:h-16 md:w-64 object-contain hidden dark:block transition-all duration-200"
                 onError={() => setLogoError(true)}
               />
             </>
           )}
-          <span className="font-bold text-lg hidden sm:block gradient-text tracking-tight">
-            Elite Eagle Crackers
-          </span>
         </Link>
 
         {/* Search */}
@@ -116,7 +113,7 @@ export default function Navbar() {
                            hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
               >
                 <img
-                  src={user?.avatar?.url || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name}`}
+                  src={user?.avatar?.url || "/default-avatar.svg"}
                   alt={user?.name}
                   className="w-7 h-7 rounded-full object-cover ring-2 ring-primary/30"
                 />

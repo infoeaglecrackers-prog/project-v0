@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <!-- Red Circular Background matching #ef4444 / #f83a3a -->
+  <circle cx="128" cy="128" r="128" fill="#f83a3a" />
+  <!-- Head -->
+  <circle cx="128" cy="88" r="42" fill="#ffffff" />
+  <!-- Body/Shoulders -->
+  <path d="M52 208 C52 154 84 140 128 140 C172 140 204 154 204 208 Z" fill="#ffffff" />
+</svg>

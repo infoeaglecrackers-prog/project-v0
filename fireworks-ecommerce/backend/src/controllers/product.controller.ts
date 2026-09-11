@@ -5,6 +5,7 @@ import cloudinary from "../config/cloudinary";
 import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
 import ApiFeatures from "../utils/apiFeatures";
+import { invalidateProductCache } from "../utils/cache";
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -33,17 +34,33 @@ const applyDiscountPercent = (body: Record<string, unknown>) => {
 // ─── Get All Products ─────────────────────────────────────────────────────────
 export const getProducts = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
-    const baseQuery = Product.find({ isActive: true }).populate("category", "name slug");
+    const limitQuery = req.query.limit !== undefined ? Number(req.query.limit) : PRODUCTS_PER_PAGE;
+    const isUnlimited = limitQuery === 0 || limitQuery >= 10000;
+    const pageSize = isUnlimited ? 10000 : limitQuery;
+
+    const baseQuery = Product.find({ isActive: true }).populate("category", "name slug sortOrder");
     const features = new ApiFeatures(baseQuery, req.query)
       .search()
       .filter()
       .sort()
-      .paginate(PRODUCTS_PER_PAGE);
+      .paginate(pageSize);
 
     const [products, total] = await Promise.all([
       features.query,
       Product.countDocuments({ isActive: true }),
     ]);
+
+    // If no explicit sort parameter, sort by category sortOrder then by name
+    if (!req.query.sort) {
+      products.sort((a, b) => {
+        const aCatOrder = (a.category as any)?.sortOrder ?? 999;
+        const bCatOrder = (b.category as any)?.sortOrder ?? 999;
+        if (aCatOrder !== bCatOrder) {
+          return aCatOrder - bCatOrder;
+        }
+        return (a.name || "").localeCompare(b.name || "");
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -51,9 +68,9 @@ export const getProducts = catchAsync(
       data: { products },
       pagination: {
         currentPage: Number(req.query.page) || 1,
-        totalPages: Math.ceil(total / PRODUCTS_PER_PAGE),
+        totalPages: Math.ceil(total / pageSize) || 1,
         totalProducts: total,
-        limit: PRODUCTS_PER_PAGE,
+        limit: pageSize,
       },
     });
   }
@@ -64,9 +81,19 @@ export const getFeaturedProducts = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
     const limit = Number(req.query.limit) || 8;
     const products = await Product.find({ isFeatured: true, isActive: true })
-      .populate("category", "name slug")
-      .limit(limit)
-      .sort("-createdAt");
+      .populate("category", "name slug sortOrder")
+      .limit(limit);
+    
+    // Sort by category sortOrder
+    products.sort((a, b) => {
+      const aCatOrder = (a.category as any)?.sortOrder ?? 999;
+      const bCatOrder = (b.category as any)?.sortOrder ?? 999;
+      if (aCatOrder !== bCatOrder) {
+        return aCatOrder - bCatOrder;
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
+    
     res.status(200).json({ success: true, data: { products } });
   }
 );
@@ -76,7 +103,7 @@ export const getBestSellers = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
     const limit = Number(req.query.limit) || 8;
     const products = await Product.find({ isActive: true })
-      .populate("category", "name slug")
+      .populate("category", "name slug sortOrder")
       .sort("-sold")
       .limit(limit);
     res.status(200).json({ success: true, data: { products } });
@@ -86,7 +113,7 @@ export const getBestSellers = catchAsync(
 // ─── Get Single Product ───────────────────────────────────────────────────────
 export const getProduct = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const product = await Product.findById(req.params.id).populate("category", "name slug");
+    const product = await Product.findById(req.params.id).populate("category", "name slug sortOrder");
     if (!product) return next(new AppError("Product not found.", 404));
     res.status(200).json({ success: true, data: { product } });
   }
@@ -125,6 +152,8 @@ export const createProduct = catchAsync(
     applyDiscountPercent(req.body);
     const product = await Product.create({ ...req.body, images, tags });
 
+    await invalidateProductCache();
+
     res.status(201).json({
       success: true,
       message: "Product created successfully",
@@ -149,6 +178,8 @@ export const updateProduct = catchAsync(
       runValidators: true,
     }).populate("category", "name slug");
 
+    await invalidateProductCache(req.params.id);
+
     res.status(200).json({
       success: true,
       message: "Product updated successfully",
@@ -169,6 +200,7 @@ export const deleteProduct = catchAsync(
     );
 
     await product.deleteOne();
+    await invalidateProductCache(req.params.id);
     res.status(200).json({ success: true, message: "Product deleted successfully" });
   }
 );
@@ -205,6 +237,7 @@ export const uploadProductImages = catchAsync(
     const newImages = await Promise.all(uploadPromises);
     product.images.push(...newImages);
     await product.save();
+    await invalidateProductCache(req.params.id);
 
     res.status(200).json({
       success: true,
@@ -228,6 +261,7 @@ export const deleteProductImage = catchAsync(
     await cloudinary.uploader.destroy(req.params.imgId);
     product.images.splice(imgIndex, 1);
     await product.save();
+    await invalidateProductCache(req.params.id);
 
     res.status(200).json({ success: true, message: "Image deleted successfully" });
   }

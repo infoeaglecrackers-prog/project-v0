@@ -9,6 +9,9 @@ export const adminService = {
   updateOrderStatus: (id: string, data: { status: string; trackingNumber?: string; courier?: string }) =>
     api.put(`/admin/orders/${id}/status`, data),
 
+  updatePaymentStatus: (id: string, data: { status: string }) =>
+    api.put(`/admin/orders/${id}/payment`, data),
+
   /** Confirm a UPI payment claim against the bank statement — moves order to Processing. */
   verifyOrderPayment: (id: string) => api.post(`/admin/orders/${id}/payment/verify`),
 

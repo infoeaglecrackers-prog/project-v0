@@ -86,7 +86,7 @@ export default function ProductCategoryList({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="flex flex-col gap-2.5">
         {Array.from({ length: skeletonRows }).map((_, i) => (
           <RowSkeleton key={i} />
         ))}
@@ -107,20 +107,24 @@ export default function ProductCategoryList({
     <div className="space-y-8">
       {sections.map((section) => (
         <section key={section.id}>
-          {/* Category header bar */}
-          <div className="flex items-center justify-between gap-3 mb-3 pl-3 pr-4 py-2.5 rounded-lg
-                          border-l-[3px] border-primary
-                          bg-gradient-to-r from-primary/[0.07] to-transparent dark:from-primary/[0.14]">
-            <h2 className="flex items-center gap-2.5 text-base font-bold text-dark dark:text-gray-100">
-              <span aria-hidden="true">🎆</span>
-              {section.name}
+          {/* Category header banner */}
+          <div className="flex items-center justify-between gap-3 mb-3 px-4 py-3 rounded-xl
+                          border border-primary/20 dark:border-primary/30
+                          bg-primary/[0.08] dark:bg-primary/[0.14]
+                          shadow-sm">
+            <h2 className="flex items-center gap-2.5 text-base font-bold text-dark dark:text-gray-100 tracking-wide">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/15 text-primary text-xs" aria-hidden="true">
+                🎆
+              </span>
+              <span>{section.name}</span>
             </h2>
-            <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/70 dark:bg-black/40 text-gray-600 dark:text-gray-300 border border-gray-200/50 dark:border-white/10 shrink-0">
               {section.products.length} {section.products.length === 1 ? "item" : "items"}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {/* List products one by one (full width stack) */}
+          <div className="flex flex-col gap-2.5">
             {section.products.map((p) => (
               <ProductRow key={p._id} product={p} />
             ))}

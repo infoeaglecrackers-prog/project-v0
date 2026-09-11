@@ -10,6 +10,7 @@ import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 
 import connectDB from "./config/db";
+import initRedis, { isRedisReady } from "./config/redis";
 import { errorHandler, notFound } from "./middlewares/error.middleware";
 
 // Route imports
@@ -31,8 +32,9 @@ import mailRoutes from "./routes/mail.routes";
 // Load env vars
 dotenv.config();
 
-// Connect to Database
+// Connect to Database & initialize Redis cache
 connectDB();
+initRedis();
 
 const app: Application = express();
 
@@ -112,7 +114,11 @@ if (process.env.NODE_ENV === "development") {
 
 // ─── Health Check ────────────────────────────────────────────────────────────
 app.get("/health", (_req: Request, res: Response) => {
-  res.status(200).json({ success: true, message: "Server is running 🚀" });
+  res.status(200).json({
+    success: true,
+    message: "Server is running 🚀",
+    redis: isRedisReady() ? "connected" : "disconnected",
+  });
 });
 
 // ─── API Routes ──────────────────────────────────────────────────────────────

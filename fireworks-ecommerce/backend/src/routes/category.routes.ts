@@ -11,12 +11,14 @@ import { protect } from "../middlewares/auth.middleware";
 import { adminOnly } from "../middlewares/admin.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { upload } from "../middlewares/upload.middleware";
+import { cacheMiddleware } from "../middlewares/cache.middleware";
 
 const router = Router();
 
 // ─── Public Routes ─────────────────────────────────────────────────────────────
-router.get("/", getCategories);
-router.get("/:id", getCategory);
+// Caches categories for 15 minutes (900s)
+router.get("/", cacheMiddleware({ ttlSeconds: 900, keyPrefix: "cache:categories:list:" }), getCategories);
+router.get("/:id", cacheMiddleware({ ttlSeconds: 900, keyPrefix: "cache:categories:item:" }), getCategory);
 
 // ─── Admin Routes ──────────────────────────────────────────────────────────────
 router.use(protect, adminOnly);

@@ -22,7 +22,7 @@ export default function ReviewCard({ review, onDelete, onEdit }: Props) {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <img
-            src={reviewUser?.avatar?.url || `https://api.dicebear.com/7.x/initials/svg?seed=${displayName}`}
+            src={reviewUser?.avatar?.url || "/default-avatar.svg"}
             alt={displayName}
             className="w-9 h-9 rounded-full"
           />

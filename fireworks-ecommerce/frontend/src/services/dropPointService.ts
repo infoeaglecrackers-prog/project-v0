@@ -5,6 +5,7 @@ export interface IDropPoint {
   name: string;
   addressLine1: string;
   addressLine2?: string;
+  district?: string;
   city: string;
   state: string;
   pincode: string;

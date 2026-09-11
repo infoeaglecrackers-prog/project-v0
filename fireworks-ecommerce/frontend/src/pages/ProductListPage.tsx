@@ -37,8 +37,15 @@ export default function ProductListPage() {
     const params: Record<string, string | number> = {};
     searchParams.forEach((v, k) => (params[k] = v));
     dispatch(setFilters(params));
-    dispatch(fetchProducts({ ...params, page: Number(params.page) || 1 }));
-  }, [searchParams, dispatch]);
+
+    if (view === "list") {
+      // In dense category list view, fetch all products in one shot top to end
+      dispatch(fetchProducts({ ...params, limit: 10000, page: 1 }));
+    } else {
+      // In grid view, keep standard pagination
+      dispatch(fetchProducts({ ...params, page: Number(params.page) || 1 }));
+    }
+  }, [searchParams, dispatch, view]);
 
   const handleFilterChange = (newFilters: Record<string, unknown>) => {
     const current: Record<string, string> = {};
@@ -167,13 +174,15 @@ export default function ProductListPage() {
           {view === "list" ? (
             <ProductCategoryList products={products} categories={categories} loading={loading} />
           ) : (
-            <ProductGrid products={products} loading={loading} />
+            <>
+              <ProductGrid products={products} loading={loading} />
+              <Pagination
+                currentPage={pagination?.currentPage || 1}
+                totalPages={pagination?.totalPages || 1}
+                onPageChange={(page) => handleFilterChange({ page: String(page) })}
+              />
+            </>
           )}
-          <Pagination
-            currentPage={pagination?.currentPage || 1}
-            totalPages={pagination?.totalPages || 1}
-            onPageChange={(page) => handleFilterChange({ page: String(page) })}
-          />
         </div>
 
         {/* Right: Cart summary panel (desktop xl+) */}

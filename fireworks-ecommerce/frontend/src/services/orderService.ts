@@ -4,6 +4,8 @@ export const orderService = {
   create: (data: object) => api.post("/orders", data),
 
   getMyOrders: (params = {}) => api.get("/orders", { params }),
+  
+  getAll: (params = {}) => api.get("/admin/orders", { params }),
 
   getById: (id: string) => api.get(`/orders/${id}`),
 

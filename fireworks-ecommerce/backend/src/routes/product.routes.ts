@@ -15,14 +15,19 @@ import { protect } from "../middlewares/auth.middleware";
 import { adminOnly } from "../middlewares/admin.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { upload } from "../middlewares/upload.middleware";
+import { cacheMiddleware } from "../middlewares/cache.middleware";
 
 const router = Router();
 
 // ─── Public Routes ─────────────────────────────────────────────────────────────
-router.get("/", getProducts);
-router.get("/featured", getFeaturedProducts);
-router.get("/bestsellers", getBestSellers);
-router.get("/:id", getProduct);
+// Caches general product listings for 3 minutes (180s)
+router.get("/", cacheMiddleware({ ttlSeconds: 180, keyPrefix: "cache:products:list:" }), getProducts);
+// Caches featured products for 10 minutes (600s)
+router.get("/featured", cacheMiddleware({ ttlSeconds: 600, keyPrefix: "cache:products:featured:" }), getFeaturedProducts);
+// Caches best sellers for 10 minutes (600s)
+router.get("/bestsellers", cacheMiddleware({ ttlSeconds: 600, keyPrefix: "cache:products:bestsellers:" }), getBestSellers);
+// Caches individual product detail for 10 minutes (600s)
+router.get("/:id", cacheMiddleware({ ttlSeconds: 600, keyPrefix: "cache:products:item:" }), getProduct);
 
 // ─── Admin Routes ──────────────────────────────────────────────────────────────
 router.use(protect, adminOnly);

@@ -10,11 +10,13 @@ import {
 import { protect } from "../middlewares/auth.middleware";
 import { adminOnly } from "../middlewares/admin.middleware";
 import { validate } from "../middlewares/validate.middleware";
+import { cacheMiddleware } from "../middlewares/cache.middleware";
 
 const router = Router();
 
 // ─── Public: Active drop points (used on checkout page) ──────────────────────
-router.get("/", getDropPoints);
+// Caches drop point locations for 30 minutes (1800s)
+router.get("/", cacheMiddleware({ ttlSeconds: 1800, keyPrefix: "cache:droppoints:list:" }), getDropPoints);
 
 // ─── Admin routes ─────────────────────────────────────────────────────────────
 router.use(protect, adminOnly);

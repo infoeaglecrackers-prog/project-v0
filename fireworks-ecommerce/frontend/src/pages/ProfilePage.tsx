@@ -87,7 +87,7 @@ export default function ProfilePage() {
               <div className="flex items-start gap-6 mb-8">
                 <div className="relative">
                   <img 
-                    src={preview || user?.avatar?.url || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name}`}
+                    src={preview || user?.avatar?.url || "/default-avatar.svg"}
                     alt={user?.name} 
                     className="w-24 h-24 rounded-full object-cover border-4 border-primary/10"
                   />

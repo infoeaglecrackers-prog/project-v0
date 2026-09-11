@@ -25,7 +25,7 @@ export default function UserTable({ users, onRoleChange, onDelete }: Props) {
             <tr key={u._id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
               <td className="py-3 px-4">
                 <div className="flex items-center gap-3">
-                  <img src={u.avatar?.url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} alt={u.name} className="w-8 h-8 rounded-full" />
+                  <img src={u.avatar?.url || "/default-avatar.svg"} alt={u.name} className="w-8 h-8 rounded-full" />
                   <span className="font-medium text-dark dark:text-gray-100">{u.name}</span>
                 </div>
               </td>

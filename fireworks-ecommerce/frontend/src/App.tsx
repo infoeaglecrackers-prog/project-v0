@@ -44,6 +44,8 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminPromoCodes from "./pages/admin/AdminPromoCodes";
 import AdminDropPoints from "./pages/admin/AdminDropPoints";
 import AdminMailPanel from "./pages/admin/AdminMailPanel";
+import AdminProductListingFormat from "./pages/admin/AdminProductListingFormat";
+import AdminProductSales from "./pages/admin/AdminProductSales";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -105,6 +107,8 @@ function AppContent() {
             <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
             <Route path="/admin/drop-points" element={<AdminDropPoints />} />
             <Route path="/admin/mail" element={<AdminMailPanel />} />
+            <Route path="/admin/product-listing-format" element={<AdminProductListingFormat />} />
+            <Route path="/admin/product-sales" element={<AdminProductSales />} />
           </Route>
         </Route>
 

@@ -29,13 +29,21 @@ export default function AdminOrders() {
     } catch { toast.error("Failed"); }
   };
 
+  const handlePaymentStatusChange = async (orderId: string, status: string) => {
+    try {
+      await adminService.updatePaymentStatus(orderId, { status });
+      toast.success("Payment status updated");
+      dispatch(fetchAdminOrders({ page, limit: 10 }));
+    } catch { toast.error("Failed"); }
+  };
+
   if (loading) return <Loader />;
 
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold text-dark dark:text-gray-100 mb-6">Orders</h1>
       <div className="card overflow-hidden">
-        <OrderTable orders={orders} onStatusChange={handleStatusChange} />
+        <OrderTable orders={orders} onStatusChange={handleStatusChange} onPaymentStatusChange={handlePaymentStatusChange} />
       </div>
       <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
     </div>

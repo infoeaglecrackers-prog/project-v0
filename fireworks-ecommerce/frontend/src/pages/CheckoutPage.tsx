@@ -11,7 +11,6 @@ import OrderReview from "../components/checkout/OrderReview";
 import DropPointSelector from "../components/checkout/DropPointSelector";
 import Modal from "../components/common/Modal";
 import { paymentService } from "../services/paymentService";
-import { promoService } from "../services/promoService";
 import type { IAddress } from "../types";
 import type { IDropPoint } from "../services/dropPointService";
 import toast from "react-hot-toast";
@@ -46,17 +45,12 @@ export default function CheckoutPage() {
   const [editAddr, setEditAddr] = useState<IAddress | null>(null);
   const [selectedDropPoint, setSelectedDropPoint] = useState<IDropPoint | null>(null);
 
-  const [promoInput, setPromoInput] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPercent: number; discountAmount: number } | null>(null);
-  const [promoLoading, setPromoLoading] = useState(false);
-
   const GST_RATE = 0;
   const FREE_SHIPPING_THRESHOLD = 0;
   const SHIPPING_CHARGE = 0;
 
   const subtotal = cart?.totalPrice || 0;
-  const discountAmount = appliedPromo?.discountAmount || 0;
-  const taxableAmount = subtotal - discountAmount;
+  const taxableAmount = subtotal;
   const shipping = taxableAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
   // Mirrors the backend exactly (order.controller.ts / payment.controller.ts use
   // parseFloat(x.toFixed(2))) so the checkout bill never drifts from the amount
@@ -64,26 +58,7 @@ export default function CheckoutPage() {
   const tax = parseFloat((taxableAmount * GST_RATE).toFixed(2));
   const total = parseFloat((taxableAmount + tax).toFixed(2));
 
-  const handleApplyPromo = async () => {
-    if (!promoInput.trim()) return;
-    setPromoLoading(true);
-    try {
-      const { data } = await promoService.validate(promoInput.trim(), subtotal);
-      setAppliedPromo(data.data);
-      toast.success(`Promo applied — ${data.data.discountPercent}% off!`);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Invalid promo code");
-      setAppliedPromo(null);
-    } finally {
-      setPromoLoading(false);
-    }
-  };
 
-  const handleRemovePromo = () => {
-    setAppliedPromo(null);
-    setPromoInput("");
-  };
 
   useEffect(() => {
     dispatch(fetchCart());
@@ -160,7 +135,6 @@ export default function CheckoutPage() {
           items,
           shippingAddress,
           paymentMethod: payMethod as "upi" | "pay_later",
-          promoCode: appliedPromo?.code,
         })
       );
       if (createOrder.fulfilled.match(result)) {
@@ -201,7 +175,6 @@ export default function CheckoutPage() {
                 ...response,
                 shippingAddress,
                 items,
-                promoCode: appliedPromo?.code,
               });
               if (verified.data.success) {
                 toast.success("Order placed!");
@@ -231,7 +204,7 @@ export default function CheckoutPage() {
       }
     } else {
       // COD — no payment to collect up front
-      const result = await dispatch(createOrder({ items, shippingAddress, paymentMethod: "cod", promoCode: appliedPromo?.code }));
+      const result = await dispatch(createOrder({ items, shippingAddress, paymentMethod: "cod" }));
       if (createOrder.fulfilled.match(result)) {
         toast.success("Order placed!");
         navigate(`/orders/${(result.payload as { _id: string })._id}`);
@@ -244,24 +217,24 @@ export default function CheckoutPage() {
   const selectedAddrObj = addresses.find((a) => a._id === selectedAddr);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-dark dark:text-gray-100 mb-6">Checkout</h1>
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 min-h-screen">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-dark dark:text-gray-100 mb-4 sm:mb-6 md:mb-8">Checkout</h1>
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-8">
+      {/* Step indicator - responsive */}
+      <div className="flex items-center gap-1 sm:gap-2 mb-6 sm:mb-8 overflow-x-auto pb-2">
         {STEPS.map((s, i) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${i <= step ? "bg-primary text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
+          <div key={s} className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0 ${i <= step ? "bg-primary text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
               {i + 1}
             </div>
-            <span className={`text-sm ${i === step ? "font-medium text-dark dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>{s}</span>
-            {i < STEPS.length - 1 && <div className={`w-16 h-0.5 ${i < step ? "bg-primary" : "bg-gray-200 dark:bg-gray-700"}`} />}
+            <span className={`text-xs sm:text-sm hidden sm:inline ${i === step ? "font-medium text-dark dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}>{s}</span>
+            {i < STEPS.length - 1 && <div className={`w-8 sm:w-12 h-0.5 flex-shrink-0 ${i < step ? "bg-primary" : "bg-gray-200 dark:bg-gray-700"}`} />}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 card p-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8">
+        <div className="card p-4 sm:p-5 md:p-6">
           {step === 0 && (
             <>
               <AddressList
@@ -292,14 +265,14 @@ export default function CheckoutPage() {
               address={selectedAddrObj}
               dropPoint={selectedDropPoint}
               paymentMethod={payMethod}
-              pricing={{ subtotal, discountAmount, shipping, tax, total }}
-              appliedPromo={appliedPromo}
+              pricing={{ subtotal, discountAmount: 0, shipping, tax, total }}
+              appliedPromo={null}
             />
           )}
 
-          <div className="flex gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-5 sm:mt-6 md:mt-8">
             {step > 0 && (
-              <button onClick={() => setStep(step - 1)} className="btn-ghost flex-1">Back</button>
+              <button onClick={() => setStep(step - 1)} className="btn-ghost flex-1 text-sm sm:text-base">Back</button>
             )}
             {step < 2 ? (
               <button
@@ -311,12 +284,12 @@ export default function CheckoutPage() {
                   setStep(step + 1);
                 }}
                 disabled={step === 0 && !selectedAddr}
-                className="btn-primary flex-1 disabled:opacity-40"
+                className="btn-primary flex-1 disabled:opacity-40 text-sm sm:text-base"
               >
                 Continue
               </button>
             ) : (
-              <button onClick={handlePlaceOrder} disabled={loading} className="btn-primary flex-1">
+              <button onClick={handlePlaceOrder} disabled={loading} className="btn-primary flex-1 text-sm sm:text-base">
                 {loading
                   ? "Placing order..."
                   : payMethod === "upi"
@@ -328,23 +301,6 @@ export default function CheckoutPage() {
             )}
           </div>
         </div>
-
-        {selectedAddrObj && cart && (
-          <div className="space-y-4">
-            <OrderReview
-              address={selectedAddrObj}
-              paymentMethod={payMethod}
-              pricing={{ subtotal, discountAmount, shipping, tax, total }}
-              appliedPromo={appliedPromo}
-              showPromoInput
-              promoInput={promoInput}
-              onPromoInputChange={setPromoInput}
-              onApplyPromo={handleApplyPromo}
-              onRemovePromo={handleRemovePromo}
-              promoLoading={promoLoading}
-            />
-          </div>
-        )}
       </div>
 
       <Modal isOpen={addrModal} onClose={() => setAddrModal(false)} title={editAddr ? "Edit Address" : "Add New Address"}>

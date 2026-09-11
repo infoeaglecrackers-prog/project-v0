@@ -5,6 +5,7 @@ import Product from "../models/Product";
 import cloudinary from "../config/cloudinary";
 import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
+import { invalidateCategoryCache } from "../utils/cache";
 
 const slugify = (text: string): string =>
   text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
@@ -63,6 +64,8 @@ export const createCategory = catchAsync(
       sortOrder: sortOrder || 0,
     });
 
+    await invalidateCategoryCache();
+
     res.status(201).json({
       success: true,
       message: "Category created successfully",
@@ -105,6 +108,8 @@ export const updateCategory = catchAsync(
       runValidators: true,
     });
 
+    await invalidateCategoryCache(req.params.id);
+
     res.status(200).json({
       success: true,
       message: "Category updated successfully",
@@ -134,6 +139,7 @@ export const deleteCategory = catchAsync(
     }
 
     await category.deleteOne();
+    await invalidateCategoryCache(req.params.id);
     res.status(200).json({ success: true, message: "Category deleted successfully" });
   }
 );

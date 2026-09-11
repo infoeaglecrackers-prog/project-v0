@@ -241,6 +241,39 @@ export const getMyOrders = catchAsync(
   }
 );
 
+// ─── Get All Orders (Admin Only) ─────────────────────────────────────────────
+export const getAllOrders = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Admin-only check
+    if (req.user!.role !== "admin") {
+      return next(new AppError("Not authorized. Admin access required.", 403));
+    }
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 100;
+    const skip = (page - 1) * limit;
+
+    const filter: Record<string, unknown> = {};
+    if (req.query.status) filter.orderStatus = req.query.status;
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort("-createdAt").skip(skip).limit(limit).lean(),
+      Order.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: { orders },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalOrders: total,
+        limit,
+      },
+    });
+  }
+);
+
 // ─── Get Order Detail ─────────────────────────────────────────────────────────
 export const getOrderDetail = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {

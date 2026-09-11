@@ -24,7 +24,7 @@ export type PaymentMethod = "upi" | "pay_later" | "razorpay" | "cod";
 export interface IOrderItem {
   product: Types.ObjectId;
   name: string;
-  image: string;
+  image?: string;
   price: number;
   quantity: number;
 }
@@ -106,7 +106,7 @@ const OrderSchema = new Schema<IOrder>(
       {
         product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
         name: { type: String, required: true },
-        image: { type: String, required: true },
+        image: { type: String },
         price: { type: Number, required: true },
         quantity: { type: Number, required: true, min: 1 },
       },

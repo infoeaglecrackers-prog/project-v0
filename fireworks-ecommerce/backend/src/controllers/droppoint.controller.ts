@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import DropPoint from "../models/DropPoint";
 import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
+import { invalidateDropPointCache } from "../utils/cache";
 
 // ─── Public: Get all active drop points ──────────────────────────────────────
 export const getDropPoints = catchAsync(
@@ -50,6 +51,7 @@ export const adminGetAllDropPoints = catchAsync(
 export const createDropPoint = catchAsync(
   async (req: Request, res: Response, _next: NextFunction) => {
     const dropPoint = await DropPoint.create(req.body);
+    await invalidateDropPointCache();
     res.status(201).json({ success: true, data: { dropPoint } });
   }
 );
@@ -62,6 +64,7 @@ export const updateDropPoint = catchAsync(
       runValidators: true,
     });
     if (!dropPoint) return next(new AppError("Drop point not found.", 404));
+    await invalidateDropPointCache();
     res.status(200).json({ success: true, data: { dropPoint } });
   }
 );
@@ -71,6 +74,7 @@ export const deleteDropPoint = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const dropPoint = await DropPoint.findByIdAndDelete(req.params.id);
     if (!dropPoint) return next(new AppError("Drop point not found.", 404));
+    await invalidateDropPointCache();
     res.status(200).json({ success: true, message: "Drop point deleted." });
   }
 );
