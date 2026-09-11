@@ -39,39 +39,66 @@ export default function AdminProducts() {
       </div>
 
       <div className="card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-              {["Product", "Price", "Stock", "Category", "Featured", "Actions"].map((h) => (
-                <th key={h} className="py-3 px-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p._id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-3">
-                    <img src={p.images?.[0]?.url || "https://placehold.co/40x40"} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
-                    <span className="font-medium text-dark dark:text-gray-100 line-clamp-1 max-w-[180px]">{p.name}</span>
-                  </div>
-                </td>
-                <td className="py-3 px-4 dark:text-gray-200">{formatCurrency(p.price)}</td>
-                <td className="py-3 px-4">
-                  <span className={p.stock > 0 ? "text-green-600" : "text-red-500"}>{p.stock}</span>
-                </td>
-                <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{(p.category as unknown as { name: string })?.name}</td>
-                <td className="py-3 px-4 dark:text-gray-300">{p.isFeatured ? "✓" : "—"}</td>
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-2">
-                    <Link to={`/admin/products/edit/${p._id}`} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded text-gray-500 dark:text-gray-400"><Edit2 size={14} /></Link>
-                    <button onClick={() => handleDelete(p._id, p.name)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400"><Trash2 size={14} /></button>
-                  </div>
-                </td>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                {["Product", "Price", "Stock", "Category", "Featured", "Actions"].map((h) => (
+                  <th key={h} className="py-3 px-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {products.map((p) => (
+                <tr key={p._id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <img src={p.images?.[0]?.url || "https://placehold.co/40x40"} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
+                      <span className="font-medium text-dark dark:text-gray-100 line-clamp-1 max-w-[180px]">{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 dark:text-gray-200">{formatCurrency(p.price)}</td>
+                  <td className="py-3 px-4">
+                    <span className={p.stock > 0 ? "text-green-600" : "text-red-500"}>{p.stock}</span>
+                  </td>
+                  <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{(p.category as unknown as { name: string })?.name}</td>
+                  <td className="py-3 px-4 dark:text-gray-300">{p.isFeatured ? "✓" : "—"}</td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Link to={`/admin/products/edit/${p._id}`} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded text-gray-500 dark:text-gray-400"><Edit2 size={14} /></Link>
+                      <button onClick={() => handleDelete(p._id, p.name)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400"><Trash2 size={14} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+          {products.map((p) => (
+            <div key={p._id} className="p-4 flex items-center gap-3">
+              <img src={p.images?.[0]?.url || "https://placehold.co/40x40"} alt={p.name} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-dark dark:text-gray-100 text-sm line-clamp-1">{p.name}</p>
+                <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="font-semibold text-dark dark:text-gray-200">{formatCurrency(p.price)}</span>
+                  <span>·</span>
+                  <span className={p.stock > 0 ? "text-green-600" : "text-red-500"}>Stock: {p.stock}</span>
+                  {p.isFeatured && <span className="text-secondary font-semibold">Featured</span>}
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{(p.category as unknown as { name: string })?.name}</p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Link to={`/admin/products/edit/${p._id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded text-gray-500 dark:text-gray-400"><Edit2 size={15} /></Link>
+                <button onClick={() => handleDelete(p._id, p.name)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400"><Trash2 size={15} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {!products.length && <div className="py-12 text-center text-gray-400 dark:text-gray-500">No products</div>}
       </div>
 

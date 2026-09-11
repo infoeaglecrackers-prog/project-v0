@@ -1,16 +1,39 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/useAppDispatch";
 import { fetchFeatured, fetchBestSellers } from "../store/slices/productSlice";
 import ProductGrid from "../components/product/ProductGrid";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Zap, Clock } from "lucide-react";
 import FireworksCanvas, { type FireworksHandle } from "../components/common/FireworksCanvas";
 import { Seo, seoAbsoluteUrl, siteName } from "../components/common/Seo";
+
+const DIWALI_DATE = new Date("2026-11-08T00:00:00+05:30");
+
+function useDiwaliCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  useEffect(() => {
+    const tick = () => {
+      const diff = DIWALI_DATE.getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 }); return; }
+      setTimeLeft({
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return timeLeft;
+}
 
 export default function HomePage() {
   const dispatch = useAppDispatch();
   const { featured, bestSellers, loading } = useAppSelector((s) => s.products);
   const fireworksRef = useRef<FireworksHandle>(null);
+  const countdown = useDiwaliCountdown();
 
   useEffect(() => {
     dispatch(fetchFeatured());
@@ -57,8 +80,9 @@ export default function HomePage() {
         <div className="flex animate-ticker whitespace-nowrap select-none">
           {[0, 1].map((ri) => (
             <div key={ri} className="flex shrink-0">
-              {["🎆 FESTIVAL SEASON SALE — UP TO 70% OFF", "✨ PESO CERTIFIED FIREWORKS", "🎇 10K+ HAPPY CUSTOMERS", "🎊 PAN-INDIA DELIVERY", "🔥 LIMITED STOCK — ORDER NOW", "💥 ELITE EAGLE CRACKERS — INDIA'S FAVOURITE"].map((text, i) => (
+              {["FESTIVAL SEASON SALE — UP TO 70% OFF", "PESO CERTIFIED FIREWORKS", "10K+ HAPPY CUSTOMERS", "PAN-INDIA DELIVERY", "MINIMUM ORDER: RS.3,000", "LIMITED STOCK — ORDER NOW", "ELITE EAGLE CRACKERS — INDIA'S FAVOURITE"].map((text, i) => (
                 <span key={i} className="px-8 text-white font-bold text-xs tracking-widest uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/60 inline-block mr-3 align-middle" />
                   {text}
                 </span>
               ))}
@@ -157,13 +181,45 @@ export default function HomePage() {
 
             {/* Trust indicators */}
             <div className="flex flex-wrap justify-center gap-6 mt-6 text-sm text-gray-500 animate-fade-in">
-              {["PESO Certified", "10k+ Happy Customers", "Pan-India Delivery"].map((t) => (
+              {["PESO Certified", "10k+ Happy Customers", "Pan-India Delivery", "Min. Order ₹3,000"].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
                   {t}
                 </span>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── DIWALI COUNTDOWN ─────────────────────────────────── */}
+      <section className="py-8 px-4" style={{ background: "linear-gradient(135deg, #0d0005 0%, #1a0009 50%, #0d0005 100%)" }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Clock size={16} className="text-secondary" />
+            <p className="text-xs font-bold text-secondary uppercase tracking-widest">Diwali 2026 Countdown</p>
+          </div>
+          <p className="text-white/60 text-sm mb-5">Order early — limited stock sells out fast!</p>
+          <div className="flex justify-center gap-3 sm:gap-6">
+            {[
+              { value: countdown.days, label: "Days" },
+              { value: countdown.hours, label: "Hours" },
+              { value: countdown.minutes, label: "Mins" },
+              { value: countdown.seconds, label: "Secs" },
+            ].map(({ value, label }, idx) => (
+              <div key={label} className="flex items-center gap-3 sm:gap-6">
+                <div className="flex flex-col items-center">
+                  <div
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center font-bold text-2xl sm:text-3xl text-white shadow-lg"
+                    style={{ background: "linear-gradient(135deg, #c9184a 0%, #e02b6a 100%)", boxShadow: "0 0 20px rgba(201,24,74,0.4)" }}
+                  >
+                    {String(value).padStart(2, "0")}
+                  </div>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-1.5">{label}</span>
+                </div>
+                {idx < 3 && <span className="text-primary font-bold text-2xl mb-4 -mx-1">:</span>}
+              </div>
+            ))}
           </div>
         </div>
       </section>

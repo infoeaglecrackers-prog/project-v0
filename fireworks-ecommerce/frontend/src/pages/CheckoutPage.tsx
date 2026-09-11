@@ -19,6 +19,7 @@ import { useCart } from "../hooks/useCart";
 import { RAZORPAY_ENABLED } from "../config/features";
 
 const STEPS = ["Address", "Payment", "Review"];
+const MINIMUM_ORDER_VALUE = 3000;
 
 // Restricts which tabs Razorpay's checkout shows, so the method picked in step 2 actually matters
 // instead of every option opening the same all-methods Razorpay screen.
@@ -122,6 +123,10 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddr || !cart) return;
+    if (subtotal < MINIMUM_ORDER_VALUE) {
+      toast.error(`Minimum order value is ₹${MINIMUM_ORDER_VALUE.toLocaleString("en-IN")}. Add more items to proceed.`);
+      return;
+    }
     const addr = addresses.find((a) => a._id === selectedAddr)!;
 
     // If a drop point is selected, build a shipping address from it
@@ -298,7 +303,13 @@ export default function CheckoutPage() {
             )}
             {step < 2 ? (
               <button
-                onClick={() => setStep(step + 1)}
+                onClick={() => {
+                  if (step === 0 && subtotal < MINIMUM_ORDER_VALUE) {
+                    toast.error(`Minimum order value is ₹${MINIMUM_ORDER_VALUE.toLocaleString("en-IN")}. Please add more items.`);
+                    return;
+                  }
+                  setStep(step + 1);
+                }}
                 disabled={step === 0 && !selectedAddr}
                 className="btn-primary flex-1 disabled:opacity-40"
               >

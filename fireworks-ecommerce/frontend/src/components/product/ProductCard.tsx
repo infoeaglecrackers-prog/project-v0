@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, ShoppingCart, Check, Star, Minus, Plus, Loader2 } from "lucide-react";
+import { Heart, ShoppingCart, Check, Star, Minus, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import { addToCart, updateCartQty } from "../../store/slices/cartSlice";
@@ -28,7 +28,6 @@ export default function ProductCard({ product }: Props) {
 
   // Stepper value = total desired qty (starts from cartQty if in cart, else 1)
   const [qty, setQty] = useState(() => cartQty || 1);
-  const [adding, setAdding] = useState(false); // request in flight
   const [justAdded, setJustAdded] = useState(false); // brief confirmation after success
 
   // Keep stepper in sync when cart changes externally (e.g. from CartPage)
@@ -46,12 +45,12 @@ export default function ProductCard({ product }: Props) {
     setQty((prev) => Math.max(1, Math.min(maxQty, prev + dir)));
   };
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!isAuthenticated) { toast.error("Please login to add to cart"); return; }
-    if (outOfStock || adding) return;
+    if (outOfStock) return;
 
     // No change needed
     if (delta === 0) {
@@ -59,29 +58,28 @@ export default function ProductCard({ product }: Props) {
       return;
     }
 
-    setAdding(true);
-    try {
-      if (cartQty === 0) {
-        // First time: add fresh
-        const result = await dispatch(addToCart({ productId: product._id, quantity: qty, product }));
-        if (addToCart.rejected.match(result)) throw new Error();
-        toastAdded(qty, product.name);
-      } else {
-        // Already in cart: set the absolute new quantity (backend handles the update)
-        const result = await dispatch(updateCartQty({ productId: product._id, quantity: qty }));
-        if (updateCartQty.rejected.match(result)) throw new Error();
-        if (delta > 0) {
+    // Optimistic: show done immediately — Redux already updates the cart in .pending
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1400);
+
+    if (cartQty === 0) {
+      dispatch(addToCart({ productId: product._id, quantity: qty, product })).then((result) => {
+        if (addToCart.rejected.match(result)) {
+          toast.error("Couldn't add to cart. Please try again.");
+        } else {
+          toastAdded(qty, product.name);
+        }
+      });
+    } else {
+      dispatch(updateCartQty({ productId: product._id, quantity: qty })).then((result) => {
+        if (updateCartQty.rejected.match(result)) {
+          toast.error("Couldn't update cart. Please try again.");
+        } else if (delta > 0) {
           toastIncreased(delta, qty);
         } else {
           toastUpdated(qty);
         }
-      }
-      setJustAdded(true);
-      setTimeout(() => setJustAdded(false), 1400);
-    } catch {
-      toast.error("Couldn't update cart. Please try again.");
-    } finally {
-      setAdding(false);
+      });
     }
   };
 
@@ -100,7 +98,6 @@ export default function ProductCard({ product }: Props) {
   // Button label changes based on cart state
   const btnLabel = () => {
     if (outOfStock) return "Out of Stock";
-    if (adding) return <><Loader2 size={15} strokeWidth={3} className="animate-spin" /> Adding…</>;
     if (justAdded) return <><Check size={15} strokeWidth={3} /> Done!</>;
     if (cartQty > 0 && delta === 0) return <><Check size={14} /> In Cart</>;
     if (cartQty > 0 && delta > 0) return <><ShoppingCart size={14} /> Add {delta} More</>;
@@ -195,15 +192,15 @@ export default function ProductCard({ product }: Props) {
         </div>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2">
-          <span className="font-bold text-dark dark:text-gray-100 text-base">
-            {formatCurrency(product.price)}
-          </span>
+        <div className="flex items-baseline gap-2 flex-wrap">
           {originalPrice && originalPrice > product.price && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 line-through">
+            <span className="text-xs font-bold text-red-500 line-through">
               {formatCurrency(originalPrice)}
             </span>
           )}
+          <span className="font-bold text-dark dark:text-gray-100 text-base">
+            {formatCurrency(product.price)}
+          </span>
         </div>
 
         {!outOfStock && (
@@ -251,16 +248,14 @@ export default function ProductCard({ product }: Props) {
         {/* ── ADD / UPDATE CART BUTTON ─────────────────────── */}
         <button
           onClick={handleAddToCart}
-          disabled={outOfStock || adding}
+          disabled={outOfStock}
           className={`w-full flex items-center justify-center gap-2
                      py-2.5 rounded-xl text-sm font-semibold text-white mt-1
                      transition-all duration-200 active:scale-95
                      disabled:cursor-not-allowed
                      ${outOfStock
                        ? "bg-gray-300 dark:bg-dark-50 text-gray-500 dark:text-gray-600"
-                       : adding
-                         ? "opacity-80 scale-[0.98]"
-                         : "hover:-translate-y-0.5 hover:shadow-glow-sm"
+                       : "hover:-translate-y-0.5 hover:shadow-glow-sm"
                      }`}
           style={!outOfStock ? btnStyle() : undefined}
         >
