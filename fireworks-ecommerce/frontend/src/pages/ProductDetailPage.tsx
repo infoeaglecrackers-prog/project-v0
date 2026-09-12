@@ -45,7 +45,7 @@ export default function ProductDetailPage() {
   const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
   const categoryName = (product.category as unknown as { name?: string })?.name;
   const productDescription = product.description || `Buy ${product.name} from Elite Eagle Crackers.`;
-  const primaryImage = product.images?.[0]?.url || "/logo-dark.png";
+  const primaryImage = product.images?.[0]?.url || "/logo.png";
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -135,7 +135,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className={`text-sm font-medium mb-5 ${product.stock > 0 ? "text-green-600" : "text-red-500"}`}>
-            {product.stock > 0 ? `✓ In Stock (${product.stock} units)` : "✗ Out of Stock"}
+            {product.stock > 0 ? `✓ In Stock ` : "✗ Out of Stock"}
           </div>
 
           {/* Qty */}

@@ -1,7 +1,4 @@
-// MongoDB Script: Insert Droppoints
-// Usage: mongosh your-db-name < insert-droppoints.js
-
-const droppoints = [
+[
   {
     "state": "Telangana",
     "district": null,
@@ -6602,23 +6599,4 @@ const droppoints = [
     "workingHours": "Mon–Sat, 9 AM – 6 PM",
     "isActive": true
   }
-];
-
-// Clear existing droppoints (optional)
-// db.droppoints.deleteMany({});
-
-// Insert droppoints
-const result = db.droppoints.insertMany(droppoints);
-console.log(`✓ Inserted ${result.insertedIds.length} droppoints`);
-
-// Verify
-const count = db.droppoints.countDocuments();
-console.log(`✓ Total droppoints in database: ${count}`);
-
-// Show by state
-const states = db.droppoints.aggregate([
-  { $group: { _id: "$state", count: { $sum: 1 } } },
-  { $sort: { _id: 1 } }
-]).toArray();
-console.log("\nDroppoints by State:");
-states.forEach(s => console.log(`  ${s._id}: ${s.count} locations`));
+]

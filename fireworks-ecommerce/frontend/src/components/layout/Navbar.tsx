@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, Heart, User, Search, LogOut, LayoutDashboard, Package, Menu, X } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut, LayoutDashboard, Package } from "lucide-react";
 import ThemeToggle from "../common/ThemeToggle";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
@@ -9,9 +9,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const cartCount = useAppSelector((s) => s.cart.cart?.totalItems || 0);
-  const wishlistCount = useAppSelector((s) => s.wishlist.products.length);
   const [search, setSearch] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -87,16 +85,6 @@ export default function Navbar() {
         <div className="flex items-center gap-1">
           <ThemeToggle />
 
-          {isAuthenticated && (
-            <Link to="/wishlist"
-                  className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
-              <Heart size={20} className="text-gray-500 dark:text-gray-300" />
-              {wishlistCount > 0 && (
-                <span className="count-badge">{wishlistCount}</span>
-              )}
-            </Link>
-          )}
-
           <Link to="/cart"
                 className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
             <ShoppingCart size={20} className="text-gray-500 dark:text-gray-300" />
@@ -162,53 +150,8 @@ export default function Navbar() {
               Login
             </Link>
           )}
-
-          {/* Mobile Menu Toggle */}
-          <button className="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                  onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </div>
-
-      {/* Mobile Search */}
-      {menuOpen && (
-        <div className="md:hidden px-4 pb-4 border-t border-gray-100 dark:border-white/5 animate-slide-down">
-          {!hideSearch && (
-            <div className="flex items-center rounded-xl mt-3 overflow-hidden
-                            bg-gray-100 dark:bg-white/5 border border-transparent
-                            focus-within:border-primary/40 focus-within:shadow-glow-sm transition-all">
-              <Search size={15} className="ml-3 text-gray-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { navigate(`/products?keyword=${search.trim()}`); setMenuOpen(false); } }}
-                placeholder="Search crackers..."
-                className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent
-                           text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
-              />
-            </div>
-          )}
-          <div className="flex flex-col mt-2 gap-0.5">
-            {[["Shop All", "/products"], ["Cart", "/cart"], ["Wishlist", "/wishlist"]].map(([label, href]) => (
-              <Link key={label} to={href}
-                    className="text-sm py-2.5 px-3 text-gray-700 dark:text-gray-200
-                               hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl transition-colors"
-                    onClick={() => setMenuOpen(false)}>
-                {label}
-              </Link>
-            ))}
-            {!isAuthenticated && (
-              <Link to="/login"
-                    className="text-sm py-2.5 px-3 text-primary font-medium
-                               hover:bg-primary/5 rounded-xl transition-colors"
-                    onClick={() => setMenuOpen(false)}>
-                Login / Register
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

@@ -40,9 +40,15 @@ export default function DropPointSelector({ selectedId, onSelect }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Extract unique states
+  // Extract unique states strictly from drop points database
   const states = useMemo(() => {
-    const unique = [...new Set(allPoints.map((p) => p.state))].sort();
+    const unique = [
+      ...new Set(
+        allPoints
+          .map((p) => p.state?.trim())
+          .filter((s): s is string => Boolean(s))
+      ),
+    ].sort((a, b) => a.localeCompare(b));
     return unique;
   }, [allPoints]);
 
@@ -57,6 +63,7 @@ export default function DropPointSelector({ selectedId, onSelect }: Props) {
           .filter((d) => d && d.trim() !== "")
       ),
     ].sort();
+    console.log("Districts for state", selectedState, ":", unique, "From", statePoints.length, "points"); // Debug log
     return unique;
   }, [selectedState, allPoints]);
 
@@ -72,6 +79,7 @@ export default function DropPointSelector({ selectedId, onSelect }: Props) {
     }
 
     const unique = [...new Set(filtered.map((p) => p.name))].sort();
+    console.log("Filtered places:", filtered, "Unique places:", unique, "Count:", unique.length); // Debug log
     return unique;
   }, [selectedState, selectedDistrict, allPoints]);
 

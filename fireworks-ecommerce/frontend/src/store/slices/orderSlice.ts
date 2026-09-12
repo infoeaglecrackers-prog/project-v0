@@ -13,10 +13,19 @@ const initialState: OrderState = { orders: [], current: null, loading: false, er
 
 export const createOrder = createAsyncThunk("orders/create", async (data: object, { rejectWithValue }) => {
   try {
+    console.log("Creating order with data:", data); // Debug log
     const res = await orderService.create(data);
-    return res.data.data?.order ?? res.data.data;
+    console.log("Order API response:", res.data); // Debug log
+    const order = res.data.data?.order ?? res.data.data;
+    console.log("Extracted order:", order); // Debug log
+    if (!order?._id) {
+      console.error("Order created but no _id found:", order);
+      return rejectWithValue("Order created but ID not found");
+    }
+    return order;
   } catch (err: unknown) {
     const error = err as { response?: { data?: { message?: string } } };
+    console.error("Order creation error:", error); // Debug log
     return rejectWithValue(error.response?.data?.message || "Failed to place order");
   }
 });

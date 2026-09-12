@@ -14,6 +14,8 @@ export const getDropPoints = catchAsync(
     // If pincode/city provided, return matching ones + all others (client ranks them)
     // We still return everything so the UI can show "other locations" too
     const dropPoints = await DropPoint.find(filter).sort("city name").lean();
+    
+    console.log("Drop points query - Filter:", filter, "Total returned:", dropPoints.length);
 
     if (pincode || city) {
       const pin = (pincode || "").trim();
@@ -29,12 +31,15 @@ export const getDropPoints = catchAsync(
         else others.push(dp);
       }
 
+      console.log("Categorized results - Nearby:", nearby.length, "Same city:", sameCity.length, "Others:", others.length);
+
       return res.status(200).json({
         success: true,
         data: { dropPoints, nearby, sameCity, others },
       });
     }
 
+    console.log("Returning all drop points without filters:", dropPoints.length);
     res.status(200).json({ success: true, data: { dropPoints, nearby: [], sameCity: [], others: dropPoints } });
   }
 );

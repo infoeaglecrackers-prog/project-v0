@@ -58,7 +58,7 @@ export default function HomePage() {
             "@type": "Organization",
             name: siteName,
             url: seoAbsoluteUrl("/"),
-            logo: seoAbsoluteUrl("/logo-dark.png"),
+            logo: seoAbsoluteUrl("/logo.png"),
             email: "info@eaglecrackers.com",
           },
           {
@@ -134,9 +134,9 @@ export default function HomePage() {
 
             {/* Floating icons */}
             <div className="flex justify-center gap-4 text-5xl mb-6 select-none">
-              <span className="animate-float">🎆</span>
-              <span className="animate-float-d1">🎇</span>
-              <span className="animate-float-d2">✨</span>
+              <span className="animate-float"></span>
+              <span className="animate-float-d1"></span>
+              <span className="animate-float-d2"></span>
             </div>
 
             {/* Pill badge */}

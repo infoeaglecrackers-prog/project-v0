@@ -24,7 +24,7 @@ export default function Footer() {
         {/* Brand */}
         <div>
           <Link to="/" className="flex items-center gap-2 mb-5">
-            <img src="/logo-dark.png" alt="" className="h-10 w-10 object-contain rounded-full" />
+            <img src="/logo.png" alt="" className="h-10 w-10 object-contain rounded-full" />
             <span className="text-white font-bold text-lg gradient-text">Elite Eagle Crackers</span>
           </Link>
           <p className="text-sm leading-relaxed text-gray-500">
@@ -103,7 +103,8 @@ export default function Footer() {
               <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Phone size={13} className="text-primary" />
               </div>
-              <span>+91 98765 43210</span>
+              <span>+91 78678 56523</span>
+              <span>+91 94876 47417</span>
             </li>
           </ul>
 

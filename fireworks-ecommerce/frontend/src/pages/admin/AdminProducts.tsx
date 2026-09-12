@@ -15,7 +15,7 @@ export default function AdminProducts() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchProducts({ page, limit: 10 }));
+    dispatch(fetchProducts({ page, limit: 1000 }));
   }, [dispatch, page]);
 
   const handleDelete = async (id: string, name: string) => {

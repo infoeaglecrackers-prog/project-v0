@@ -138,14 +138,21 @@ export default function CheckoutPage() {
         })
       );
       if (createOrder.fulfilled.match(result)) {
+        const orderId = (result.payload as { _id: string })?._id;
+        if (!orderId) {
+          toast.error("Order created but no ID found. Please contact support.");
+          return;
+        }
         toast.success(
           payMethod === "pay_later"
             ? "Order placed! Pay by UPI within 2 days to start packing."
             : "Order placed! Complete the UPI payment to confirm it."
         );
-        navigate(`/orders/${(result.payload as { _id: string })._id}`);
+        navigate(`/orders/${orderId}`);
       } else {
-        toast.error("Order failed");
+        const errorMsg = (result.payload as string) || "Order creation failed";
+        console.error("Order creation failed:", errorMsg);
+        toast.error(errorMsg);
       }
       return;
     }
@@ -206,10 +213,17 @@ export default function CheckoutPage() {
       // COD — no payment to collect up front
       const result = await dispatch(createOrder({ items, shippingAddress, paymentMethod: "cod" }));
       if (createOrder.fulfilled.match(result)) {
+        const orderId = (result.payload as { _id: string })?._id;
+        if (!orderId) {
+          toast.error("Order created but no ID found. Please contact support.");
+          return;
+        }
         toast.success("Order placed!");
-        navigate(`/orders/${(result.payload as { _id: string })._id}`);
+        navigate(`/orders/${orderId}`);
       } else {
-        toast.error("Order failed");
+        const errorMsg = (result.payload as string) || "Order creation failed";
+        console.error("COD order creation failed:", errorMsg);
+        toast.error(errorMsg);
       }
     }
   };

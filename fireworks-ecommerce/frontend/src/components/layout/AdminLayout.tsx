@@ -25,7 +25,7 @@ export default function AdminLayout() {
     <>
       <div className="p-5 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/logo-dark.png" alt="" className="h-7 w-7 object-contain rounded-full" />
+          <img src="/logo.png" alt="" className="h-7 w-7 object-contain rounded-full" />
           <span className="text-white font-bold text-sm">Admin Panel</span>
         </div>
         <button onClick={closeSidebar} className="text-gray-400 hover:text-white lg:hidden">
@@ -91,7 +91,7 @@ export default function AdminLayout() {
             <Menu size={20} className="sm:w-6 sm:h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <img src="/logo-dark.png" alt="" className="h-6 w-6 sm:h-7 sm:w-7 object-contain rounded-full" />
+            <img src="/logo.png" alt="" className="h-6 w-6 sm:h-7 sm:w-7 object-contain rounded-full" />
             <span className="font-bold text-xs sm:text-sm">Admin</span>
           </div>
         </header>

@@ -14,7 +14,7 @@ interface SeoProps {
 }
 
 const SITE_NAME = "Elite Eagle Crackers";
-const DEFAULT_IMAGE = "/logo-dark.png";
+const DEFAULT_IMAGE = "/logo.png";
 const DEFAULT_KEYWORDS = [
 
     "buy crackers online" ,
