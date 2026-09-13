@@ -37,6 +37,26 @@ export default function AdminEditProduct() {
     setNewPreviews((prev) => prev.filter((_, idx) => idx !== i));
   };
 
+  const handleRemoveExistingImage = async (img: string | { public_id?: string; url?: string }) => {
+    if (!id || !product) return;
+    const publicId = typeof img === "string" ? img : img.public_id;
+    if (!publicId) {
+      toast.error("Cannot delete image: Missing public_id");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this image?")) return;
+
+    try {
+      await productService.deleteImage(id, publicId);
+      toast.success("Image removed successfully");
+      dispatch(fetchProductById(id));
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to remove image");
+    }
+  };
+
   const handleSubmit = async (data: Record<string, unknown>) => {
     if (!id) return;
     setSaving(true);
@@ -90,8 +110,16 @@ export default function AdminEditProduct() {
           <h3 className="font-semibold text-dark dark:text-gray-100 mb-4">Current Images</h3>
           <div className="flex flex-wrap gap-3">
             {product.images.map((img, i) => (
-              <div key={i} className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+              <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 group">
                 <img src={typeof img === 'string' ? img : (img.url || '')} alt={`Current ${i}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveExistingImage(img)}
+                  title="Remove image"
+                  className="absolute top-1 right-1 bg-white/90 dark:bg-gray-900/90 hover:bg-red-500 hover:text-white rounded-full p-1 text-gray-700 dark:text-gray-200 shadow transition-colors"
+                >
+                  <X size={14} />
+                </button>
               </div>
             ))}
           </div>

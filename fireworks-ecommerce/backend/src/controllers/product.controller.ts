@@ -302,12 +302,15 @@ export const deleteProductImage = catchAsync(
     const product = await Product.findById(req.params.id);
     if (!product) return next(new AppError("Product not found.", 404));
 
+    // Express wildcard route puts everything after /images/ into req.params[0] or req.params.publicId
+    const targetPublicId = req.params[0] || req.params.publicId;
+
     const imgIndex = product.images.findIndex(
-      (img) => img.public_id === req.params.imgId
+      (img) => img.public_id === targetPublicId
     );
     if (imgIndex === -1) return next(new AppError("Image not found.", 404));
 
-    await cloudinary.uploader.destroy(req.params.imgId);
+    await cloudinary.uploader.destroy(targetPublicId);
     product.images.splice(imgIndex, 1);
     await product.save();
     await invalidateProductCache(req.params.id);

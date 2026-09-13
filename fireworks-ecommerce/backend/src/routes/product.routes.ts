@@ -64,6 +64,6 @@ router.put(
 
 router.delete("/:id", deleteProduct);
 router.post("/:id/images", upload.array("images", 5), uploadProductImages);
-router.delete("/:id/images/:publicId", deleteProductImage);
+router.delete("/:id/images/*", deleteProductImage);
 
 export default router;

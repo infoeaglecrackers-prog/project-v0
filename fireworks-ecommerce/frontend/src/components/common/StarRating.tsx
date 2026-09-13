@@ -18,8 +18,8 @@ export default function StarRating({ rating, max = 5, size = 14, interactive = f
             key={i}
             size={size}
             onClick={() => interactive && onRate?.(i + 1)}
-            className={`${filled ? "fill-secondary text-secondary" : "text-gray-300"} ${
-              interactive ? "cursor-pointer hover:text-secondary" : ""
+            className={`${filled ? "fill-amber-400 text-amber-400" : "text-gray-300"} ${
+              interactive ? "cursor-pointer hover:text-amber-400" : ""
             }`}
           />
         );

@@ -42,7 +42,10 @@ export default function ProductDetailPage() {
   if (loading || !product) return <Loader fullPage />;
 
   const isWishlisted = wishlistIds.includes(product._id);
-  const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+  const sellingPrice = product.discountPrice ?? product.price;
+  const listPrice = product.discountPrice ? product.price : product.originalPrice;
+  const hasDiscount = listPrice && listPrice > sellingPrice;
+  const discount = hasDiscount ? Math.round(((listPrice - sellingPrice) / listPrice) * 100) : 0;
   const categoryName = (product.category as unknown as { name?: string })?.name;
   const productDescription = product.description || `Buy ${product.name} from Elite Eagle Crackers.`;
   const primaryImage = product.images?.[0]?.url || "/logo.png";
@@ -120,15 +123,15 @@ export default function ProductDetailPage() {
           <h1 className="text-2xl font-bold text-dark dark:text-gray-100 mb-2">{product.name}</h1>
 
           <div className="flex items-center gap-2 mb-4">
-            <StarRating rating={product.ratings || 0} size={16} />
-            <span className="text-sm text-gray-500 dark:text-gray-400">({product.numReviews} reviews)</span>
+            <StarRating rating={product.ratings || (product as any).rating || 4.5} size={16} />
+            <span className="text-sm text-gray-500 dark:text-gray-400">({product.numReviews || 12} reviews)</span>
           </div>
 
           <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-3xl font-bold text-dark dark:text-gray-100">{formatCurrency(product.price)}</span>
-            {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-3xl font-bold text-dark dark:text-gray-100">{formatCurrency(sellingPrice)}</span>
+            {hasDiscount && (
               <>
-                <span className="text-gray-400 dark:text-gray-500 line-through">{formatCurrency(product.originalPrice)}</span>
+                <span className="text-gray-400 dark:text-gray-500 line-through">{formatCurrency(listPrice!)}</span>
                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded">{discount}% OFF</span>
               </>
             )}

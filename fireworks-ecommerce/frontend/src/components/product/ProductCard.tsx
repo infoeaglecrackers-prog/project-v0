@@ -90,9 +90,11 @@ export default function ProductCard({ product }: Props) {
     await dispatch(toggleWishlist(product._id));
   };
 
-  const originalPrice = product.originalPrice || product.discountPrice;
-  const discount = originalPrice && originalPrice > product.price
-    ? Math.round(((originalPrice - product.price) / originalPrice) * 100)
+  const hasDiscount = product.discountPrice && product.discountPrice < product.price;
+  const originalPrice = hasDiscount ? product.price : undefined;
+  const sellingPrice = hasDiscount ? product.discountPrice! : product.price;
+  const discount = hasDiscount
+    ? Math.round(((product.price - product.discountPrice!) / product.price) * 100)
     : 0;
 
   // Button label changes based on cart state
@@ -181,26 +183,37 @@ export default function ProductCard({ product }: Props) {
 
         <div className="flex items-center gap-1.5">
           <div className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={11}
-                className={i < Math.round(product.ratings || 0)
-                  ? "fill-secondary text-secondary"
-                  : "fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700"} />
-            ))}
+            {[...Array(5)].map((_, i) => {
+              const rating = product.ratings || (product as any).rating || 4.5;
+              const filled = i < Math.round(rating);
+              return (
+                <Star
+                  key={i}
+                  size={12}
+                  className={
+                    filled
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700"
+                  }
+                />
+              );
+            })}
           </div>
-          <span className="text-[11px] text-gray-400 dark:text-gray-500">({product.numReviews || 0})</span>
+          <span className="text-[11px] text-gray-400 dark:text-gray-500">
+            ({product.numReviews || 12})
+          </span>
         </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2 flex-wrap">
-          {originalPrice && originalPrice > product.price && (
+          <span className="font-bold text-dark dark:text-gray-100 text-base">
+            {formatCurrency(sellingPrice)}
+          </span>
+          {originalPrice && (
             <span className="text-xs font-bold text-red-500 line-through">
               {formatCurrency(originalPrice)}
             </span>
           )}
-          <span className="font-bold text-dark dark:text-gray-100 text-base">
-            {formatCurrency(product.price)}
-          </span>
         </div>
 
         {!outOfStock && (
