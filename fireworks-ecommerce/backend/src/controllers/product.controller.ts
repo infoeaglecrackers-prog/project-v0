@@ -14,20 +14,27 @@ const PRODUCTS_PER_PAGE = 12;
 // badge (ProductCard/ProductDetailPage) reflects it automatically.
 const applyDiscountPercent = (body: Record<string, unknown>) => {
   const price = Number(body.price);
-  const discountPercent = Number(body.discountPercent);
   const discountPriceRaw = body.discountPrice ?? body.originalPrice;
 
   if (discountPriceRaw !== undefined && discountPriceRaw !== null && discountPriceRaw !== "") {
     const discountPrice = Number(discountPriceRaw);
-    if (discountPrice > 0 && price > 0 && !body.discountPercent) {
-      body.discountPercent = Math.round(((discountPrice - price) / discountPrice) * 100);
+    if (discountPrice > price && price > 0) {
+      // MRP (discountPrice) is higher than Selling Price (price)
+      body.discountPercent = Math.max(0, Math.round(((discountPrice - price) / discountPrice) * 100));
+    } else {
+      // Selling price >= discount price (or no valid discount) -> clear discount percent/price
+      body.discountPercent = 0;
     }
     body.discountPrice = discountPrice;
     return;
   }
 
-  if (discountPercent > 0 && discountPercent < 100 && price > 0) {
-    body.discountPrice = Math.round(price / (1 - discountPercent / 100));
+  // If no discountPrice/originalPrice was passed or empty, reset discountPercent to 0 or leave undefined
+  if (body.discountPercent !== undefined) {
+    const dp = Number(body.discountPercent);
+    if (isNaN(dp) || dp < 0) {
+      body.discountPercent = 0;
+    }
   }
 };
 

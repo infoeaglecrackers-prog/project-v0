@@ -1,5 +1,4 @@
 import { useForm, useFieldArray } from "react-hook-form";
-import { useEffect } from "react";
 import { Plus, X } from "lucide-react";
 import { useAppSelector } from "../../hooks/useAppDispatch";
 import type { IProduct } from "../../types";
@@ -16,7 +15,6 @@ type FormData = {
   description?: string;
   price: number;
   discountPrice?: number;
-  discountPercent?: number;
   stock: number;
   category: string;
   isFeatured: boolean;
@@ -25,13 +23,12 @@ type FormData = {
 
 export default function ProductForm({ initial, onSubmit, loading, hasImages = true }: Props) {
   const categories = useAppSelector((s) => s.admin.categories);
-  const { register, handleSubmit, control, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       name: initial?.name || "",
       description: initial?.description ?? undefined,
       price: initial?.price || 0,
       discountPrice: initial?.discountPrice ?? initial?.originalPrice ?? undefined,
-      discountPercent: initial?.discountPercent ?? undefined,
       stock: initial?.stock || 0,
       category:
         typeof initial?.category === "string"
@@ -43,20 +40,7 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
   });
   const { fields, append, remove } = useFieldArray({ control, name: "specifications" });
 
-  const priceValue = watch("price");
-  const discountPriceValue = watch("discountPrice");
 
-  useEffect(() => {
-    const p = Number(priceValue);
-    const d = Number(discountPriceValue);
-    if (!isNaN(p) && p > 0 && !isNaN(d) && d >= 0) {
-      const calc = Math.round(((p - d) / p) * 100);
-      const current = getValues("discountPercent");
-      if ((current === undefined || current === null) && !isNaN(calc)) {
-        setValue("discountPercent", calc);
-      }
-    }
-  }, [priceValue, discountPriceValue, getValues, setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit as unknown as (data: FormData) => void)} className="space-y-5">
@@ -82,16 +66,7 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Discount %</label>
-        <input
-          type="number"
-          {...register("discountPercent", { min: 0, max: 99 })}
-          className="input-field mt-1"
-          placeholder="e.g. 20 — auto-calculates Original Price if left blank above"
-        />
-        {errors.discountPercent && <p className="text-xs text-red-500 mt-1">Must be between 0 and 99</p>}
-      </div>
+      {/* Discount percent is calculated on the backend from price/discountPrice; removed from UI */}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
