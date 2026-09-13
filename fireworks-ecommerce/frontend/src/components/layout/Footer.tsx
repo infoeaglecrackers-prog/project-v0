@@ -95,8 +95,8 @@ export default function Footer() {
               <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Mail size={13} className="text-primary" />
               </div>
-              <a href="mailto:info@eaglecrackers.com" className="hover:text-primary transition-colors">
-                info@eaglecrackers.com
+              <a href="mailto:infoeaglecrackers@gmail.com" className="hover:text-primary transition-colors">
+                infoeaglecrackers@gmail.com
               </a>
             </li>
             <li className="flex items-center gap-2.5 text-sm text-gray-500">

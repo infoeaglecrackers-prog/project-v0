@@ -59,7 +59,7 @@ export default function HomePage() {
             name: siteName,
             url: seoAbsoluteUrl("/"),
             logo: seoAbsoluteUrl("/logo.png"),
-            email: "info@eaglecrackers.com",
+            email: "infoeaglecrackers@gmail.com",
           },
           {
             "@context": "https://schema.org",
