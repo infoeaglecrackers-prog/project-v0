@@ -22,11 +22,12 @@ export default function AdminProductSales() {
     const fetchSalesData = async () => {
       setLoading(true);
       try {
-        // Fetch all orders with delivered status
+        // Fetch all orders with delivered status (check both status and orderStatus, case-insensitive)
         const { data } = await orderService.getAll();
-        const deliveredOrders = (data.data?.orders || []).filter(
-          (order: any) => order.status === "delivered"
-        );
+        const deliveredOrders = (data.data?.orders || []).filter((order: any) => {
+          const statusStr = (order.orderStatus || order.status || "").toLowerCase();
+          return statusStr === "delivered";
+        });
 
         // Calculate sales by product
         const salesMap = new Map<
@@ -35,12 +36,16 @@ export default function AdminProductSales() {
         >();
 
         deliveredOrders.forEach((order: any) => {
-          order.items?.forEach((item: any) => {
+          const itemsList = order.orderItems || order.items || [];
+          itemsList.forEach((item: any) => {
             const productName =
               typeof item.product === "object"
-                ? item.product.name
-                : item.productName || "Unknown Product";
-            const productId = typeof item.product === "object" ? item.product._id : item.productId;
+                ? item.product?.name
+                : item.name || item.productName || "Unknown Product";
+            const productId =
+              typeof item.product === "object"
+                ? item.product?._id
+                : item.product || item.productId || productName;
 
             if (salesMap.has(productId)) {
               const existing = salesMap.get(productId)!;

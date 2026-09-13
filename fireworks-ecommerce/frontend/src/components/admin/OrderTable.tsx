@@ -82,8 +82,8 @@ export default function OrderTable({ orders, onStatusChange, onPaymentStatusChan
                   )}
                 </td>
                 <td className="py-3 px-4">
-                  <Link to={`/admin/orders/${order._id}`} className="text-primary hover:underline text-xs flex items-center gap-1">
-                    View <ChevronRight size={12} />
+                  <Link to={`/admin/orders/${order._id}`} className="text-primary hover:underline text-xs flex items-center gap-1 font-medium">
+                    View & Invoice <ChevronRight size={12} />
                   </Link>
                 </td>
               </tr>
@@ -141,8 +141,8 @@ export default function OrderTable({ orders, onStatusChange, onPaymentStatusChan
                   {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               ) : null}
-              <Link to={`/admin/orders/${order._id}`} className="text-primary hover:underline text-xs flex items-center gap-1 whitespace-nowrap">
-                View <ChevronRight size={12} />
+              <Link to={`/admin/orders/${order._id}`} className="text-primary hover:underline text-xs flex items-center gap-1 whitespace-nowrap font-medium">
+                View & Invoice <ChevronRight size={12} />
               </Link>
             </div>
           </div>

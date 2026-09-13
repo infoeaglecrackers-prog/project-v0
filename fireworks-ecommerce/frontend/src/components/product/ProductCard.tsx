@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Heart, ShoppingCart, Check, Star, Minus, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Heart, ShoppingCart, Check, Star, Minus, Plus, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import { addToCart, updateCartQty } from "../../store/slices/cartSlice";
 import { toggleWishlist } from "../../store/slices/wishlistSlice";
@@ -16,7 +16,10 @@ interface Props {
 
 export default function ProductCard({ product }: Props) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+
+  const [zoomed, setZoomed] = useState(false);
 
   const wishlistIds = useAppSelector((s) => s.wishlist.products.map((p) => p._id));
   const isWishlisted = wishlistIds.includes(product._id);
@@ -90,6 +93,27 @@ export default function ProductCard({ product }: Props) {
     await dispatch(toggleWishlist(product._id));
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigating to product detail page on single tap on mobile
+    if (window.innerWidth < 768) {
+      if (!zoomed) {
+        e.preventDefault();
+        e.stopPropagation();
+        setZoomed(true);
+      }
+    }
+  };
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    if (window.innerWidth < 768) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!zoomed) {
+        setZoomed(true);
+      }
+    }
+  };
+
   const hasDiscount = product.discountPrice && product.discountPrice < product.price;
   const originalPrice = hasDiscount ? product.price : undefined;
   const sellingPrice = hasDiscount ? product.discountPrice! : product.price;
@@ -114,22 +138,24 @@ export default function ProductCard({ product }: Props) {
   };
 
   return (
-    <Link
-      to={`/products/${product._id}`}
-      className="card card-shine group flex flex-col
-                 hover:shadow-card-hover hover:-translate-y-1
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
-                 transition-all duration-300"
-    >
-      {/* ── IMAGE ──────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-t-2xl aspect-[4/3]">
-        <img
-          src={product.images?.[0]?.url || "https://placehold.co/400x300?text=No+Image"}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent
-                        opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+    <>
+      <Link
+        to={`/products/${product._id}`}
+        onClick={handleCardClick}
+        className="card card-shine group flex flex-col
+                   hover:shadow-card-hover hover:-translate-y-1
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
+                   transition-all duration-300"
+      >
+        {/* ── IMAGE ──────────────────────────────────────────── */}
+        <div className="relative overflow-hidden rounded-t-2xl aspect-[4/3]" onClick={handleImageClick}>
+          <img
+            src={product.images?.[0]?.url || "https://placehold.co/400x300?text=No+Image"}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out cursor-pointer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent
+                          opacity-60 group-hover:opacity-80 transition-opacity duration-300 pointer-events-none" />
 
         {discount > 0 && (
           <span
@@ -276,5 +302,53 @@ export default function ProductCard({ product }: Props) {
         </button>
       </div>
     </Link>
+
+    {/* ── MOBILE IMAGE ZOOM MODAL (1st click zooms image; 2nd click navigates) ── */}
+    {zoomed && (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setZoomed(false);
+        }}
+      >
+        <div
+          className="relative max-w-sm w-full bg-white dark:bg-dark-100 rounded-2xl overflow-hidden shadow-2xl p-3 border border-white/10"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setZoomed(false);
+            navigate(`/products/${product._id}`);
+          }}
+        >
+          <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-black/5">
+            <img
+              src={product.images?.[0]?.url || "https://placehold.co/400x300?text=No+Image"}
+              alt={product.name}
+              className="w-full h-full object-contain scale-110 transition-transform duration-300"
+            />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setZoomed(false);
+              }}
+              className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 shadow backdrop-blur-sm"
+            >
+              <X size={16} />
+            </button>
+            <div className="absolute bottom-2 left-2 bg-black/70 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+              Tap again for details →
+            </div>
+          </div>
+          <div className="mt-3 text-center px-2 pb-1">
+            <h4 className="text-sm font-bold text-dark dark:text-gray-100 line-clamp-1">{product.name}</h4>
+            <p className="text-xs font-semibold text-primary mt-0.5">{formatCurrency(sellingPrice)}</p>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

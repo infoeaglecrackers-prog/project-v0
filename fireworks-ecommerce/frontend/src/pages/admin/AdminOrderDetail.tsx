@@ -9,7 +9,7 @@ import Loader from "../../components/common/Loader";
 import { adminService } from "../../services/adminService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDateTime } from "../../utils/formatDate";
-import { ChevronLeft, Loader2, ShieldCheck, ShieldX } from "lucide-react";
+import { ChevronLeft, Loader2, ShieldCheck, ShieldX, Printer } from "lucide-react";
 import type { IAddress } from "../../types";
 import { PAYMENT_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "../../utils/constants";
 import toast from "react-hot-toast";
@@ -121,10 +121,17 @@ export default function AdminOrderDetail() {
           <p className="text-sm text-gray-400 dark:text-gray-500">{formatDateTime(order.createdAt)}</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.print()}
+            className="btn-ghost flex items-center gap-1.5 text-xs font-semibold px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors print:hidden"
+            title="Print Tax Invoice"
+          >
+            <Printer size={15} /> Print Invoice
+          </button>
           <select
             value={order.orderStatus}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+            className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm print:hidden"
           >
             {/* Surface the current status even when it isn't a manually-settable
                 one (AwaitingPayment/AwaitingVerification), so the select doesn't
@@ -256,6 +263,100 @@ export default function AdminOrderDetail() {
               <div className="flex justify-between font-semibold dark:text-gray-100"><span>Total</span><span>{formatCurrency(order.totalAmount)}</span></div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── PRINTABLE TAX INVOICE BILL (Visible on window.print()) ── */}
+      <div className="hidden print:block fixed inset-0 bg-white text-black p-8 text-sm">
+        <div className="border-b-2 border-gray-800 pb-4 mb-6 flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold uppercase tracking-wider">TAX INVOICE</h1>
+            <p className="text-base font-semibold mt-1">Elite Eagle Crackers</p>
+            <p className="text-xs text-gray-600">Certified Fireworks & Crackers</p>
+            <p className="text-xs text-gray-600">Email: infoeaglecrackers@gmail.com | Phone: +91 78678 56523</p>
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-lg">Invoice #{order._id.slice(-8).toUpperCase()}</p>
+            <p className="text-xs text-gray-600">Date: {new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
+            <p className="text-xs font-semibold mt-1 uppercase">Status: {order.orderStatus}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-8 mb-6 text-xs">
+          <div className="border p-3 rounded">
+            <p className="font-bold uppercase mb-1">Billed To (Customer):</p>
+            <p className="font-semibold text-sm">{(order.user as unknown as { name?: string })?.name || addr?.fullName}</p>
+            <p>Email: {(order.user as unknown as { email?: string })?.email || "N/A"}</p>
+            <p>Phone: {addr?.phone}</p>
+          </div>
+          <div className="border p-3 rounded">
+            <p className="font-bold uppercase mb-1">Shipping & Pickup Details:</p>
+            <p className="font-semibold">{addr?.fullName}</p>
+            <p>{addr?.addressLine1}, {addr?.addressLine2 ? `${addr.addressLine2}, ` : ""}</p>
+            <p>{addr?.city}, {addr?.state} - {addr?.pincode}</p>
+          </div>
+        </div>
+
+        <table className="w-full text-xs border-collapse mb-6">
+          <thead>
+            <tr className="border-b-2 border-black bg-gray-100">
+              <th className="py-2 text-left px-2">#</th>
+              <th className="py-2 text-left px-2">Item Description</th>
+              <th className="py-2 text-center px-2">Qty</th>
+              <th className="py-2 text-right px-2">Unit Price</th>
+              <th className="py-2 text-right px-2">Total Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderItems.map((item: any, idx: number) => {
+              const name = typeof item.product === "object" ? item.product?.name : item.name || item.productName;
+              const price = item.price || 0;
+              const qty = item.quantity || 1;
+              return (
+                <tr key={idx} className="border-b border-gray-300">
+                  <td className="py-2 px-2">{idx + 1}</td>
+                  <td className="py-2 px-2 font-medium">{name}</td>
+                  <td className="py-2 px-2 text-center">{qty}</td>
+                  <td className="py-2 px-2 text-right">₹{price.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-right">₹{(price * qty).toFixed(2)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        <div className="flex justify-end mb-8">
+          <div className="w-64 space-y-1 text-xs">
+            <div className="flex justify-between py-1 border-b">
+              <span>Items Total:</span>
+              <span>₹{(order.itemsPrice || order.totalAmount).toFixed(2)}</span>
+            </div>
+            {!!(order as any).discountAmount && (
+              <div className="flex justify-between py-1 border-b text-green-700">
+                <span>Discount:</span>
+                <span>-₹{(order as any).discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between py-1 border-b font-bold text-sm">
+              <span>Grand Total:</span>
+              <span>₹{order.totalAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-1 text-gray-600">
+              <span>Payment Method:</span>
+              <span className="uppercase font-semibold">{order.paymentInfo?.method || order.paymentMethod}</span>
+            </div>
+            {order.paymentInfo?.utr && (
+              <div className="flex justify-between py-1 text-gray-600">
+                <span>UTR Ref:</span>
+                <span className="font-mono">{order.paymentInfo.utr}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="border-t pt-4 text-center text-xs text-gray-500">
+          <p className="font-semibold text-black">Thank you for your purchase from Elite Eagle Crackers!</p>
+          <p className="mt-0.5">This is a computer-generated invoice and requires no signature.</p>
         </div>
       </div>
     </div>

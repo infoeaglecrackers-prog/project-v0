@@ -108,23 +108,7 @@ export default function Footer() {
             </li>
           </ul>
 
-          {/* Newsletter */}
-          <div>
-            <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Newsletter</p>
-            <div className="flex overflow-hidden rounded-xl border border-white/8">
-              <input
-                placeholder="Your email address"
-                className="flex-1 bg-white/5 px-3 py-2.5 text-sm outline-none
-                           text-gray-200 placeholder:text-gray-600"
-              />
-              <button
-                className="px-3.5 text-white text-sm font-semibold shrink-0 transition-opacity hover:opacity-80"
-                style={{ background: "linear-gradient(135deg, #c9184a, #e02b6a)" }}
-              >
-                →
-              </button>
-            </div>
-          </div>
+          
         </div>
       </div>
 

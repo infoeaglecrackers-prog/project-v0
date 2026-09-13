@@ -68,36 +68,49 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-dark dark:text-gray-100 mb-6">My Account</h1>
-      <div className="flex gap-6">
-        {/* Sidebar */}
-        <div className="w-48 shrink-0 space-y-1">
+    <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <h1 className="text-xl sm:text-2xl font-bold text-dark dark:text-gray-100 mb-4 sm:mb-6">My Account</h1>
+      
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
+        {/* Navigation Tabs - Horizontal on mobile, vertical sidebar on desktop */}
+        <div className="flex md:flex-col overflow-x-auto pb-1 md:pb-0 scrollbar-none md:w-48 shrink-0 gap-1.5 md:space-y-1 border-b md:border-b-0 border-gray-200 dark:border-gray-700">
           {tabs.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setTab(key)}
-              className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm text-left ${tab === key ? "bg-primary/10 text-primary font-medium" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}`}>
-              <Icon size={15} /> {label}
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-2 whitespace-nowrap px-3.5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm text-left transition-colors ${
+                tab === key
+                  ? "bg-primary text-white md:bg-primary/10 md:text-primary font-semibold md:font-medium shadow-sm md:shadow-none"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              <Icon size={16} /> {label}
             </button>
           ))}
         </div>
 
-        <div className="flex-1 card p-6">
+        {/* Content Area */}
+        <div className="flex-1 card p-4 sm:p-6">
           {tab === "profile" && (
             <div>
-              <div className="flex items-start gap-6 mb-8">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6 sm:mb-8 text-center sm:text-left">
                 <div className="relative">
                   <img 
                     src={preview || user?.avatar?.url || "/default-avatar.svg"}
                     alt={user?.name} 
-                    className="w-24 h-24 rounded-full object-cover border-4 border-primary/10"
+                    className="w-20 h-24 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-primary/10 shadow-sm"
                   />
                   <button
                     onClick={() => avatarRef.current?.click()}
                     disabled={uploadingAvatar}
-                    className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full hover:bg-primary/90 disabled:opacity-50"
+                    className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full hover:bg-primary/90 disabled:opacity-50 shadow-md"
                     title="Upload photo"
                   >
-                    {uploadingAvatar ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Upload size={14} />}
+                    {uploadingAvatar ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload size={14} />
+                    )}
                   </button>
                   <input
                     ref={avatarRef}
@@ -108,27 +121,51 @@ export default function ProfilePage() {
                     disabled={uploadingAvatar}
                   />
                 </div>
-                <div>
-                  <p className="font-semibold text-dark dark:text-gray-100">{user?.name}</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">{user?.email}</p>
-                  <span className="badge bg-primary/10 text-primary mt-2">{user?.role}</span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Click the camera icon to change your photo</p>
+                <div className="flex-1">
+                  <p className="font-bold text-lg text-dark dark:text-gray-100">{user?.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-all mt-0.5">{user?.email}</p>
+                  <div className="flex justify-center sm:justify-start items-center gap-2 mt-2">
+                    <span className="badge bg-primary/10 text-primary capitalize font-medium">{user?.role}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click the icon on your avatar to upload a new profile picture.</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Profile editing coming soon.</p>
+
+              {/* User details summary card */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-3 border border-gray-100 dark:border-gray-700/50">
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Account Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 block">Full Name</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-200">{user?.name || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 block">Email Address</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-200 break-all">{user?.email || "N/A"}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
           {tab === "password" && (
             <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); toast.success("Password updated!"); }}>
-              <h3 className="font-semibold text-dark dark:text-gray-100">Change Password</h3>
+              <h3 className="font-semibold text-dark dark:text-gray-100 text-base sm:text-lg">Change Password</h3>
               {(["current", "newPwd", "confirm"] as const).map((k) => (
                 <div key={k}>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">{k === "current" ? "Current" : k === "newPwd" ? "New Password" : "Confirm"}</label>
-                  <input type="password" value={pwd[k]} onChange={(e) => setPwd((p) => ({ ...p, [k]: e.target.value }))} className="input-field mt-1" />
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {k === "current" ? "Current Password" : k === "newPwd" ? "New Password" : "Confirm New Password"}
+                  </label>
+                  <input
+                    type="password"
+                    value={pwd[k]}
+                    onChange={(e) => setPwd((p) => ({ ...p, [k]: e.target.value }))}
+                    className="input-field mt-1 text-sm"
+                    placeholder="••••••••"
+                  />
                 </div>
               ))}
-              <button className="btn-primary">Update Password</button>
+              <button className="btn-primary w-full sm:w-auto mt-2">Update Password</button>
             </form>
           )}
 
