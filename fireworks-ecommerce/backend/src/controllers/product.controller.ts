@@ -172,18 +172,60 @@ export const updateProduct = catchAsync(
       req.body.tags = req.body.tags.split(",").map((t: string) => t.trim());
     }
 
-    applyDiscountPercent(req.body);
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate("category", "name slug");
+    // If images were uploaded in the update request, upload them to Cloudinary
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (files && files.length > 0) {
+      const uploadPromises = files.map(
+        (file) =>
+          new Promise<{ public_id: string; url: string }>((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              { folder: "fireworks/products" },
+              (error, result) => {
+                if (error || !result) return reject(error);
+                resolve({ public_id: result.public_id, url: result.secure_url });
+              }
+            );
+            streamifier.createReadStream(file.buffer).pipe(stream);
+          })
+      );
 
+      const newImages = await Promise.all(uploadPromises);
+      product.images.push(...newImages);
+    }
+
+    // Normalize tags and discount before applying updates
+    if (req.body.tags && typeof req.body.tags === "string") {
+      req.body.tags = req.body.tags.split(",").map((t: string) => t.trim());
+    }
+
+    applyDiscountPercent(req.body);
+
+    // If description is provided as an empty string, treat it as deletion (remove the field)
+    if (Object.prototype.hasOwnProperty.call(req.body, "description")) {
+      const desc = req.body.description;
+      if (desc === "" || desc === null) {
+        // remove description from the incoming body and unset on document
+        // @ts-ignore
+        product.description = undefined;
+        delete req.body.description;
+      }
+    }
+
+    // Apply any provided fields onto the document and save
+    Object.keys(req.body).forEach((key) => {
+      // Avoid overwriting images array from the body if present; we manage images above
+      if (key === "images") return;
+      // @ts-ignore
+      product[key] = req.body[key];
+    });
+
+    const saved = await product.save();
     await invalidateProductCache(req.params.id);
 
     res.status(200).json({
       success: true,
       message: "Product updated successfully",
-      data: { product: updated },
+      data: { product: await saved.populate("category", "name slug") },
     });
   }
 );

@@ -42,10 +42,10 @@ export default function AdminEditProduct() {
     setSaving(true);
     try {
       // If there are new images, create FormData; otherwise send as JSON
-      if (newImages.length > 0) {
+        if (newImages.length > 0) {
         const formData = new FormData();
         formData.append("name", data.name as string);
-        formData.append("description", data.description as string);
+        if (data.description !== undefined) formData.append("description", data.description as string);
         formData.append("price", data.price as string);
         if (data.discountPrice) formData.append("discountPrice", data.discountPrice as string);
         if (data.discountPercent) formData.append("discountPercent", data.discountPercent as string);

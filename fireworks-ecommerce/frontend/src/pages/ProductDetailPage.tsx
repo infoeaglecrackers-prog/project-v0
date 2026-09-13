@@ -162,7 +162,7 @@ export default function ProductDetailPage() {
             {(["desc", "specs", "reviews"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 className={`mr-4 pb-2 text-sm font-medium border-b-2 transition-colors ${tab === t ? "border-primary text-primary" : "border-transparent text-gray-500 dark:text-gray-400"}`}>
-                {t === "desc" ? "Description" : t === "specs" ? "Specifications" : `Reviews (${reviews.length})`}
+                {t === "desc" ? "Description" : t === "specs" ? "Specifications" : `Reviews `}
               </button>
             ))}
           </div>

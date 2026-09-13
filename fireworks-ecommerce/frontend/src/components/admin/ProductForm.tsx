@@ -1,4 +1,5 @@
 import { useForm, useFieldArray } from "react-hook-form";
+import { useEffect } from "react";
 import { Plus, X } from "lucide-react";
 import { useAppSelector } from "../../hooks/useAppDispatch";
 import type { IProduct } from "../../types";
@@ -12,7 +13,7 @@ interface Props {
 
 type FormData = {
   name: string;
-  description: string;
+  description?: string;
   price: number;
   discountPrice?: number;
   discountPercent?: number;
@@ -24,20 +25,38 @@ type FormData = {
 
 export default function ProductForm({ initial, onSubmit, loading, hasImages = true }: Props) {
   const categories = useAppSelector((s) => s.admin.categories);
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       name: initial?.name || "",
-      description: initial?.description || "",
+      description: initial?.description ?? undefined,
       price: initial?.price || 0,
       discountPrice: initial?.discountPrice ?? initial?.originalPrice ?? undefined,
       discountPercent: initial?.discountPercent ?? undefined,
       stock: initial?.stock || 0,
-      category: (initial?.category as unknown as { _id: string })?._id || "",
+      category:
+        typeof initial?.category === "string"
+          ? (initial.category as string)
+          : ((initial?.category as unknown as { _id?: string })?._id || ""),
       isFeatured: initial?.isFeatured || false,
       specifications: (initial?.specifications as { key: string; value: string }[]) || [],
     },
   });
   const { fields, append, remove } = useFieldArray({ control, name: "specifications" });
+
+  const priceValue = watch("price");
+  const discountPriceValue = watch("discountPrice");
+
+  useEffect(() => {
+    const p = Number(priceValue);
+    const d = Number(discountPriceValue);
+    if (!isNaN(p) && p > 0 && !isNaN(d) && d >= 0) {
+      const calc = Math.round(((p - d) / p) * 100);
+      const current = getValues("discountPercent");
+      if ((current === undefined || current === null) && !isNaN(calc)) {
+        setValue("discountPercent", calc);
+      }
+    }
+  }, [priceValue, discountPriceValue, getValues, setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit as unknown as (data: FormData) => void)} className="space-y-5">
@@ -48,8 +67,8 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Description *</label>
-        <textarea {...register("description", { required: "Required" })} rows={4} className="input-field mt-1 resize-none" />
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Description</label>
+        <textarea {...register("description")} rows={4} className="input-field mt-1 resize-none" placeholder="Optional — short product description" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
