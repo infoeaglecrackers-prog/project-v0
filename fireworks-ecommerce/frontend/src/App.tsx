@@ -11,6 +11,7 @@ import { fetchWishlist } from "./store/slices/wishlistSlice";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import WhatsAppButton from "./components/common/WhatsAppButton";
+import CallButton from "./components/common/CallButton";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -18,6 +19,10 @@ import AdminLayout from "./components/layout/AdminLayout";
 import HomePage from "./pages/HomePage";
 import ProductListPage from "./pages/ProductListPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import AboutPage from "./pages/AboutPage";
+import DeliveryPolicyPage from "./pages/DeliveryPolicyPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -123,6 +128,10 @@ function AppContent() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/products" element={<ProductListPage />} />
                   <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/delivery-policy" element={<DeliveryPolicyPage />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -139,7 +148,11 @@ function AppContent() {
                 </Routes>
               </div>
               <Footer />
-              <WhatsAppButton />
+              {/* Sits above the mobile sticky cart bar on the product list page */}
+              <div className="fixed bottom-24 md:bottom-5 right-5 z-40 flex flex-col gap-3">
+                <CallButton />
+                <WhatsAppButton />
+              </div>
             </div>
           }
         />

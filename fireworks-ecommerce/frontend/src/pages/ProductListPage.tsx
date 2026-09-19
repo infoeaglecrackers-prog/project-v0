@@ -6,6 +6,7 @@ import ProductGrid from "../components/product/ProductGrid";
 import ProductCategoryList from "../components/product/ProductCategoryList";
 import FilterSidebar from "../components/product/FilterSidebar";
 import CartSummaryPanel from "../components/product/CartSummaryPanel";
+import MobileCartBar from "../components/product/MobileCartBar";
 import Pagination from "../components/common/Pagination";
 import { Seo } from "../components/common/Seo";
 import { SlidersHorizontal, ShoppingCart, X, List, LayoutGrid } from "lucide-react";
@@ -63,7 +64,7 @@ export default function ProductListPage() {
   };
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 py-8">
+    <div className="max-w-screen-2xl mx-auto px-4 py-8 pb-24 md:pb-8">
       <Seo
         title="Fireworks and Crackers Online"
         description="Browse certified sparklers, rockets, flower pots, chakkars, gift boxes, and festival crackers from Elite Eagle Crackers."
@@ -211,6 +212,9 @@ export default function ProductListPage() {
           </div>
         </div>
       )}
+
+      {/* Mobile: persistent sticky cart bar at the bottom of the list */}
+      <MobileCartBar />
     </div>
   );
 }

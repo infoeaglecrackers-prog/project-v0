@@ -33,12 +33,21 @@ class ApiFeatures<T> {
 
   filter(): this {
     const queryCopy: Record<string, unknown> = { ...this.queryStr };
-    const removeFields = ["keyword", "page", "limit", "sort"];
+    const removeFields = ["keyword", "page", "limit", "sort", "minPrice", "maxPrice"];
     removeFields.forEach((k) => delete queryCopy[k]);
 
     // Support comma-separated category IDs for multi-select: ?category=id1,id2
     if (typeof queryCopy.category === "string" && queryCopy.category.includes(",")) {
       queryCopy.category = { $in: queryCopy.category.split(",").map((s) => s.trim()) };
+    }
+
+    // ?minPrice=X&maxPrice=Y (used by the frontend price filter/deal links) → price range
+    const { minPrice, maxPrice } = this.queryStr;
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const price: Record<string, number> = {};
+      if (minPrice !== undefined && minPrice !== "") price.gte = Number(minPrice);
+      if (maxPrice !== undefined && maxPrice !== "") price.lte = Number(maxPrice);
+      if (Object.keys(price).length > 0) queryCopy.price = price;
     }
 
     // Convert price[gte] → $gte, etc.

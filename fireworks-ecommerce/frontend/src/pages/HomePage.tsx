@@ -148,13 +148,12 @@ export default function HomePage() {
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-6xl font-bold mb-5 leading-tight animate-slide-up">
-              Light Up Every{" "}
-              <span className="gradient-text">Celebration</span>
+              Buy Premium <span className="gradient-text">Sivakasi Crackers</span> Online in India
             </h1>
 
             <p className="text-lg text-gray-400 mb-10 max-w-xl mx-auto leading-relaxed animate-slide-up-d1">
-              Premium certified fireworks delivered to your doorstep.
-              Safe, vibrant, and unforgettable!
+              Shop high-quality, government-certified fireworks from Elite Eagle Crackers.
+              Safe, affordable, and delivered across India for all festive occasions.
             </p>
 
             {/* CTAs — restore pointer-events so buttons are clickable */}

@@ -57,17 +57,8 @@ export const getProducts = catchAsync(
       Product.countDocuments({ isActive: true }),
     ]);
 
-    // If no explicit sort parameter, sort by category sortOrder then by name
-    if (!req.query.sort) {
-      products.sort((a, b) => {
-        const aCatOrder = (a.category as any)?.sortOrder ?? 999;
-        const bCatOrder = (b.category as any)?.sortOrder ?? 999;
-        if (aCatOrder !== bCatOrder) {
-          return aCatOrder - bCatOrder;
-        }
-        return (a.name || "").localeCompare(b.name || "");
-      });
-    }
+    // No JS re-sort here — ApiFeatures.sort() already sorts by price ascending
+    // at the DB level by default (or by the explicit ?sort= param when given).
 
     res.status(200).json({
       success: true,

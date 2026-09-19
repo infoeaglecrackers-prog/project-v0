@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Camera, Users, X, Mail, Phone, ArrowRight } from "lucide-react";
+import { Camera, Users, X, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 
 const SOCIAL = [
   { icon: Camera, href: "#", label: "Instagram" },
@@ -7,8 +7,12 @@ const SOCIAL = [
   { icon: X,      href: "#", label: "X / Twitter" },
 ];
 
-const QUICK_LINKS = [["Home", "/"], ["Products", "/products"], ["Cart", "/cart"], ["My Orders", "/orders"]];
-const HELP_LINKS  = ["FAQ", "Terms & Conditions", "Privacy Policy"];
+const HELP_LINKS: [string, string][] = [
+  ["About Us", "/about"],
+  ["Delivery Policy", "/delivery-policy"],
+  ["Terms & Conditions", "/terms"],
+  ["Privacy Policy", "/privacy-policy"],
+];
 
 export default function Footer() {
   return (
@@ -19,7 +23,7 @@ export default function Footer() {
         style={{ background: "linear-gradient(90deg, transparent, rgba(201,24,74,0.7), rgba(255,215,0,0.35), rgba(201,24,74,0.7), transparent)" }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
 
         {/* Brand */}
         <div>
@@ -49,11 +53,11 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Quick Links */}
+        {/* Help */}
         <div>
-          <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Quick Links</h4>
+          <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Help</h4>
           <ul className="space-y-2.5">
-            {QUICK_LINKS.map(([label, href]) => (
+            {HELP_LINKS.map(([label, href]) => (
               <li key={label}>
                 <Link
                   to={href}
@@ -68,29 +72,16 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Help */}
-        <div>
-          <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Help</h4>
-          <ul className="space-y-2.5">
-            {HELP_LINKS.map((item) => (
-              <li key={item}>
-                <a
-                  href="#"
-                  className="text-sm text-gray-500 hover:text-primary
-                             flex items-center gap-1.5 group transition-colors duration-200"
-                >
-                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 -ml-4 group-hover:ml-0 transition-all duration-200" />
-                  {item}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         {/* Contact + Newsletter */}
         <div>
           <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Get in Touch</h4>
           <ul className="space-y-3 mb-6">
+            <li className="flex items-start gap-2.5 text-sm text-gray-500">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <MapPin size={13} className="text-primary" />
+              </div>
+              <span className="leading-relaxed">Sivakasi - Kalugumalai Rd, Sivakasi, Thayilpatti, Tamil Nadu 626128</span>
+            </li>
             <li className="flex items-center gap-2.5 text-sm text-gray-500">
               <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Mail size={13} className="text-primary" />
