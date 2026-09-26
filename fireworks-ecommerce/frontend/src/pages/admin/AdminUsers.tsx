@@ -13,14 +13,14 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchAdminUsers({ page, limit: 10 }));
+    dispatch(fetchAdminUsers({ page, limit: 100 }));
   }, [dispatch, page]);
 
   const handleRoleChange = async (userId: string, role: string) => {
     try {
       await adminService.changeUserRole(userId, role);
       toast.success("Role updated");
-      dispatch(fetchAdminUsers({ page, limit: 10 }));
+      dispatch(fetchAdminUsers({ page, limit: 100 }));
     } catch { toast.error("Failed"); }
   };
 
@@ -29,7 +29,7 @@ export default function AdminUsers() {
     try {
       await adminService.deleteUser(userId);
       toast.success("User deleted");
-      dispatch(fetchAdminUsers({ page, limit: 10 }));
+      dispatch(fetchAdminUsers({ page, limit: 100 }));
     } catch { toast.error("Failed"); }
   };
 

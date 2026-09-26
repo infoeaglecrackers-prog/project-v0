@@ -15,7 +15,7 @@ import {
   orderConfirmationTemplate,
 } from "../templates/email.templates";
 import { generateInvoicePDF } from "../utils/generateInvoice";
-import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
+import { sendAdminOrderInvoice } from "../utils/sendWhatsAppInvoice";
 import { getAdminRecipientLine } from "../utils/adminRecipients";
 import { OrderStatus } from "../models/Order";
 
@@ -315,9 +315,17 @@ export const verifyUpiPayment = catchAsync(
       console.error("Payment confirmation email failed:", err);
     }
 
-    if (invoicePdf && user.phone) {
+    if (invoicePdf) {
       try {
-        await sendWhatsAppInvoice(user.phone, user.name, order._id.toString(), invoicePdf);
+        await sendAdminOrderInvoice({
+          customerName: user.name,
+          customerPhone: user.phone,
+          customerEmail: user.email,
+          orderId: order._id.toString(),
+          invoicePdf,
+          totalAmount: order.totalAmount,
+          shippingAddress: order.shippingAddress,
+        });
       } catch (err) {
         console.error("WhatsApp invoice send failed:", err);
       }

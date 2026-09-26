@@ -29,7 +29,7 @@ export default function RegisterPage() {
     const ok = await authRegister({ name: data.name, email: data.email, phone: data.phone, password: data.password });
     if (!ok) toast.error(error || "Registration failed");
     else {
-      toast.success("Account created! Check your email for a verification code.");
+      toast.success("Account created! Check WhatsApp for a verification code.");
       setShowOtpStep(true);
     }
   };
@@ -38,9 +38,9 @@ export default function RegisterPage() {
     if (otp.length !== 6) { toast.error("Enter the 6-digit code"); return; }
     setVerifying(true);
     try {
-      await authService.verifyEmailOtp(otp);
+      await authService.verifyOtp(otp);
       dispatch(updateUser({ isVerified: true }));
-      toast.success("Email verified!");
+      toast.success("Account verified!");
       navigate("/");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -53,7 +53,7 @@ export default function RegisterPage() {
   const handleResendOtp = async () => {
     setResending(true);
     try {
-      await authService.sendEmailOtp();
+      await authService.sendOtp();
       toast.success("Verification code resent!");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -67,10 +67,10 @@ export default function RegisterPage() {
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-bg">
         <div className="card p-8 w-full max-w-md text-center">
-          <span className="text-4xl">📧</span>
-          <h1 className="text-2xl font-bold text-dark dark:text-gray-100 mt-3">Verify Your Email</h1>
+          <span className="text-4xl">💬</span>
+          <h1 className="text-2xl font-bold text-dark dark:text-gray-100 mt-3">Verify Your WhatsApp Number</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            We sent a 6-digit code to <strong>{user?.email}</strong>
+            We sent a 6-digit code to WhatsApp on <strong>{user?.phone}</strong>
           </p>
 
           <input
@@ -83,7 +83,7 @@ export default function RegisterPage() {
           />
 
           <button onClick={handleVerifyOtp} disabled={verifying} className="btn-primary w-full py-3 mt-4">
-            {verifying ? "Verifying..." : "Verify Email"}
+            {verifying ? "Verifying..." : "Verify Number"}
           </button>
 
           <button

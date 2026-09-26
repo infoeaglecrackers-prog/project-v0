@@ -1,7 +1,7 @@
 import api from "./api";
 
 export const authService = {
-  register: (data: { name: string; email: string; password: string; phone?: string }) =>
+  register: (data: { name: string; email: string; password: string; phone: string }) =>
     api.post("/auth/register", data),
 
   login: (data: { email: string; password: string }) =>
@@ -22,7 +22,7 @@ export const authService = {
   resetPassword: (token: string, password: string, confirmPassword: string) =>
     api.put(`/auth/reset-password/${token}`, { password, confirmPassword }),
 
-  sendEmailOtp: () => api.post("/auth/send-email-otp"),
+  sendOtp: () => api.post("/auth/send-otp"),
 
-  verifyEmailOtp: (otp: string) => api.post("/auth/verify-email-otp", { otp }),
+  verifyOtp: (otp: string) => api.post("/auth/verify-otp", { otp }),
 };

@@ -110,7 +110,7 @@ export default function ProductRow({ product }: Props) {
         {product.images?.[0]?.url ? (
           <img
             src={product.images[0].url}
-            alt={product.name}
+            alt={product.images[0].alt || product.name}
             loading="lazy"
             className="w-full h-full object-cover"
           />

@@ -110,28 +110,31 @@ export default function AdminOrderDetail() {
   };
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div className="p-4 sm:p-6 max-w-5xl">
+      {/* ── Screen-only content (hidden entirely when printing so only the
+          invoice block below renders, and it doesn't repeat across pages) ── */}
+      <div className="print:hidden">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-dark dark:hover:text-gray-200 mb-6">
         <ChevronLeft size={16} /> Back to Orders
       </button>
 
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-xl font-bold text-dark dark:text-gray-100">Order #{order._id.slice(-8).toUpperCase()}</h1>
           <p className="text-sm text-gray-400 dark:text-gray-500">{formatDateTime(order.createdAt)}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => window.print()}
-            className="btn-ghost flex items-center gap-1.5 text-xs font-semibold px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors print:hidden"
-            title="Print Tax Invoice"
+            className="btn-ghost flex items-center gap-1.5 text-xs font-semibold px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Print Invoice"
           >
             <Printer size={15} /> Print Invoice
           </button>
           <select
             value={order.orderStatus}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm print:hidden"
+            className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
           >
             {/* Surface the current status even when it isn't a manually-settable
                 one (AwaitingPayment/AwaitingVerification), so the select doesn't
@@ -265,12 +268,14 @@ export default function AdminOrderDetail() {
           </div>
         </div>
       </div>
+      </div>
 
-      {/* ── PRINTABLE TAX INVOICE BILL (Visible on window.print()) ── */}
-      <div className="hidden print:block fixed inset-0 bg-white text-black p-8 text-sm">
+      {/* ── PRINTABLE INVOICE (Visible only on window.print(), flows in normal
+          document position so it doesn't repeat across every printed page) ── */}
+      <div className="hidden print:block bg-white text-black p-8 text-sm">
         <div className="border-b-2 border-gray-800 pb-4 mb-6 flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold uppercase tracking-wider">TAX INVOICE</h1>
+            <h1 className="text-2xl font-bold uppercase tracking-wider">INVOICE</h1>
             <p className="text-base font-semibold mt-1">Elite Eagle Crackers</p>
             <p className="text-xs text-gray-600">Certified Fireworks & Crackers</p>
             <p className="text-xs text-gray-600">Email: infoeaglecrackers@gmail.com | Phone: +91 78678 56523</p>

@@ -14,10 +14,10 @@ export interface IUser extends Document {
   role: "user" | "admin";
   authProvider: "local" | "google";
   googleId?: string;
-  isVerified: boolean; // email verified
-  phoneVerified: boolean; // reserved — requires an SMS gateway to actually deliver OTPs
-  emailOtp?: string;
-  emailOtpExpire?: Date;
+  isVerified: boolean; // verified via WhatsApp OTP
+  phoneVerified: boolean; // reserved, unused — isVerified covers WhatsApp-verified phones now
+  otp?: string;
+  otpExpire?: Date;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   refreshToken?: string;
@@ -26,7 +26,7 @@ export interface IUser extends Document {
   // Methods
   comparePassword(enteredPassword: string): Promise<boolean>;
   getResetPasswordToken(): string;
-  getEmailOtp(): string;
+  getOtp(): string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -57,6 +57,10 @@ const UserSchema = new Schema<IUser>(
     },
     phone: {
       type: String,
+      required: [
+        function (this: IUser) { return this.authProvider !== "google"; },
+        "WhatsApp/mobile number is required",
+      ],
       match: [/^[6-9]\d{9}$/, "Please provide a valid 10-digit Indian mobile number"],
     },
     avatar: {
@@ -81,8 +85,8 @@ const UserSchema = new Schema<IUser>(
     },
     isVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
-    emailOtp: { type: String, select: false },
-    emailOtpExpire: { type: Date, select: false },
+    otp: { type: String, select: false },
+    otpExpire: { type: Date, select: false },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },
     refreshToken: { type: String, select: false },
@@ -117,11 +121,11 @@ UserSchema.methods.getResetPasswordToken = function (): string {
   return resetToken;
 };
 
-// ─── Method: Generate 6-digit email OTP ──────────────────────────────────────
-UserSchema.methods.getEmailOtp = function (): string {
+// ─── Method: Generate 6-digit OTP (delivered via WhatsApp) ───────────────────
+UserSchema.methods.getOtp = function (): string {
   const otp = crypto.randomInt(100000, 1000000).toString();
-  this.emailOtp = crypto.createHash("sha256").update(otp).digest("hex");
-  this.emailOtpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  this.otp = crypto.createHash("sha256").update(otp).digest("hex");
+  this.otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   return otp;
 };
 

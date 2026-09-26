@@ -7,7 +7,8 @@ import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken";
 import sendEmail from "../utils/sendEmail";
-import { resetPasswordTemplate, otpVerificationTemplate } from "../templates/email.templates";
+import { sendWhatsAppOtp } from "../utils/sendWhatsapp";
+import { resetPasswordTemplate } from "../templates/email.templates";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -34,17 +35,13 @@ export const register = catchAsync(
 
     user.refreshToken = refreshToken;
 
-    // Send email verification OTP — non-blocking, user can resend from the app
-    const otp = user.getEmailOtp();
+    // Send WhatsApp verification OTP — non-blocking, user can resend from the app
+    const otp = user.getOtp();
     await user.save({ validateBeforeSave: false });
     try {
-      await sendEmail({
-        to: user.email,
-        subject: `Verify Your Email — ${BRAND}`,
-        html: otpVerificationTemplate(user.name, otp),
-      });
+      await sendWhatsAppOtp(user.phone!, otp);
     } catch (err) {
-      console.error("OTP email failed:", err);
+      console.error("WhatsApp OTP failed:", err);
     }
 
     res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
@@ -70,61 +67,61 @@ export const register = catchAsync(
   }
 );
 
-// ─── Send / Resend Email OTP ──────────────────────────────────────────────────
-export const sendEmailOtp = catchAsync(
+// ─── Send / Resend WhatsApp OTP ────────────────────────────────────────────────
+export const sendOtp = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = await User.findById(req.user!._id);
     if (!user) return next(new AppError("User not found.", 404));
     if (user.isVerified) {
-      return next(new AppError("Email is already verified.", 400));
+      return next(new AppError("Account is already verified.", 400));
+    }
+    if (!user.phone) {
+      return next(new AppError("Add a WhatsApp number to your account before requesting an OTP.", 400));
     }
 
-    const otp = user.getEmailOtp();
+    const otp = user.getOtp();
     await user.save({ validateBeforeSave: false });
 
     try {
-      await sendEmail({
-        to: user.email,
-        subject: `Verify Your Email — ${BRAND}`,
-        html: otpVerificationTemplate(user.name, otp),
-      });
+      await sendWhatsAppOtp(user.phone, otp);
     } catch (err) {
-      console.error("OTP email failed:", err);
-      return next(new AppError("Could not send OTP email. Try again later.", 500));
+      console.error("WhatsApp OTP failed:", err);
+      return next(new AppError("Could not send OTP via WhatsApp. Try again later.", 500));
     }
 
-    res.status(200).json({ success: true, message: `OTP sent to ${user.email}` });
+    res.status(200).json({ success: true, message: `OTP sent to WhatsApp number ending in ${user.phone.slice(-4)}` });
   }
 );
 
-// ─── Verify Email OTP ─────────────────────────────────────────────────────────
-export const verifyEmailOtp = catchAsync(
+// ─── Verify WhatsApp OTP ───────────────────────────────────────────────────────
+export const verifyOtp = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { otp } = req.body as { otp: string };
     if (!otp) return next(new AppError("OTP is required.", 400));
 
-    const user = await User.findById(req.user!._id).select("+emailOtp +emailOtpExpire");
+    const user = await User.findById(req.user!._id).select("+otp +otpExpire");
     if (!user) return next(new AppError("User not found.", 404));
     if (user.isVerified) {
-      return next(new AppError("Email is already verified.", 400));
+      return next(new AppError("Account is already verified.", 400));
     }
 
     const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
     if (
-      !user.emailOtp ||
-      user.emailOtp !== hashedOtp ||
-      !user.emailOtpExpire ||
-      user.emailOtpExpire < new Date()
+      !user.otp ||
+      user.otp !== hashedOtp ||
+      !user.otpExpire ||
+      user.otpExpire < new Date()
     ) {
       return next(new AppError("OTP is invalid or has expired.", 400));
     }
 
     user.isVerified = true;
-    user.emailOtp = undefined;
-    user.emailOtpExpire = undefined;
+    user.phoneVerified = true;
+    user.otp = undefined;
+    user.otpExpire = undefined;
     await user.save({ validateBeforeSave: false });
 
-    res.status(200).json({ success: true, message: "Email verified successfully." });
+    res.status(200).json({ success: true, message: "Account verified successfully." });
   }
 );
 

@@ -12,7 +12,7 @@ export const useAuth = () => {
     error,
     isAdmin: user?.role === "admin",
     login: (email: string, password: string) => dispatch(loginUser({ email, password })),
-    register: (data: { name: string; email: string; password: string; phone?: string }) =>
+    register: (data: { name: string; email: string; password: string; phone: string }) =>
       dispatch(registerUser(data)),
     googleAuth: (credential: string) => dispatch(googleAuthUser(credential)),
     logout: () => dispatch(logoutUser()),

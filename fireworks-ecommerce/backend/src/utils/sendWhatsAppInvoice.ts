@@ -3,11 +3,41 @@ interface GraphResponse {
   error?: { message?: string };
 }
 
+interface WhatsAppDocumentTemplateInput {
+  to: string;
+  templateName: string;
+  languageCode?: string;
+  filename: string;
+  pdfBuffer: Buffer;
+  bodyParameters: string[];
+}
+
+interface AdminOrderWhatsAppInput {
+  customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  orderId: string;
+  invoicePdf: Buffer;
+  totalAmount: number;
+  shippingAddress: {
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
+}
+
 const GRAPH_API_VERSION = "v21.0";
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 // The template must be created + approved in Meta WhatsApp Manager first — see backend/.env comments.
 const TEMPLATE_NAME = process.env.WHATSAPP_TEMPLATE_NAME || "order_invoice";
+const ADMIN_TEMPLATE_NAME = process.env.WHATSAPP_ADMIN_ORDER_TEMPLATE_NAME || "admin_order_invoice";
+const DEFAULT_ADMIN_ORDER_PHONE = process.env.WHATSAPP_ADMIN_ORDER_PHONE || "6382927769";
 
 // India-only: stored phone numbers are plain 10-digit mobiles (see User.ts phone regex).
 const toE164 = (phone: string) => (phone.startsWith("91") ? phone : `91${phone}`);
@@ -29,17 +59,19 @@ const uploadMedia = async (pdfBuffer: Buffer, phoneNumberId: string, accessToken
   return data.id;
 };
 
-export const sendWhatsAppInvoice = async (
-  phone: string,
-  customerName: string,
-  orderId: string,
-  invoicePdf: Buffer
-): Promise<void> => {
+const sendWhatsAppDocumentTemplate = async ({
+  to,
+  templateName,
+  languageCode = "en",
+  filename,
+  pdfBuffer,
+  bodyParameters,
+}: WhatsAppDocumentTemplateInput): Promise<void> => {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  if (!phoneNumberId || !accessToken) return; // Not configured — silently skip
+  if (!phoneNumberId || !accessToken) return;
 
-  const mediaId = await uploadMedia(invoicePdf, phoneNumberId, accessToken);
+  const mediaId = await uploadMedia(pdfBuffer, phoneNumberId, accessToken);
 
   const res = await fetch(`${GRAPH_BASE}/${phoneNumberId}/messages`, {
     method: "POST",
@@ -49,22 +81,19 @@ export const sendWhatsAppInvoice = async (
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to: toE164(phone),
+      to: toE164(to),
       type: "template",
       template: {
-        name: TEMPLATE_NAME,
-        language: { code: "en" },
+        name: templateName,
+        language: { code: languageCode },
         components: [
           {
             type: "header",
-            parameters: [{ type: "document", document: { id: mediaId, filename: "Invoice.pdf" } }],
+            parameters: [{ type: "document", document: { id: mediaId, filename } }],
           },
           {
             type: "body",
-            parameters: [
-              { type: "text", text: customerName },
-              { type: "text", text: orderId },
-            ],
+            parameters: bodyParameters.map((text) => ({ type: "text", text })),
           },
         ],
       },
@@ -73,4 +102,57 @@ export const sendWhatsAppInvoice = async (
 
   const data = (await res.json()) as GraphResponse;
   if (!res.ok) throw new Error(data.error?.message || "WhatsApp message send failed");
+};
+
+export const sendWhatsAppInvoice = async (
+  phone: string,
+  customerName: string,
+  orderId: string,
+  invoicePdf: Buffer
+): Promise<void> => {
+  await sendWhatsAppDocumentTemplate({
+    to: phone,
+    templateName: TEMPLATE_NAME,
+    filename: "Invoice.pdf",
+    pdfBuffer: invoicePdf,
+    bodyParameters: [customerName, orderId],
+  });
+};
+
+const formatAddress = (address: AdminOrderWhatsAppInput["shippingAddress"]): string => {
+  return [
+    address.fullName,
+    address.phone,
+    address.addressLine1,
+    address.addressLine2,
+    `${address.city}, ${address.state} ${address.pincode}`,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+};
+
+export const sendAdminOrderInvoice = async ({
+  customerName,
+  customerPhone,
+  customerEmail,
+  orderId,
+  invoicePdf,
+  totalAmount,
+  shippingAddress,
+}: AdminOrderWhatsAppInput): Promise<void> => {
+  await sendWhatsAppDocumentTemplate({
+    to: DEFAULT_ADMIN_ORDER_PHONE,
+    templateName: ADMIN_TEMPLATE_NAME,
+    filename: `Invoice-${orderId}.pdf`,
+    pdfBuffer: invoicePdf,
+    bodyParameters: [
+      customerName,
+      customerPhone || shippingAddress.phone || "N/A",
+      customerEmail || "N/A",
+      orderId,
+      `Rs. ${totalAmount.toFixed(2)}`,
+      formatAddress(shippingAddress),
+    ],
+  });
 };

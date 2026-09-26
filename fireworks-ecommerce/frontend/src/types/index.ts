@@ -62,6 +62,7 @@ export interface ICategory {
 export interface IProductImage {
   public_id: string;
   url: string;
+  alt: string;
 }
 
 export interface IProduct {

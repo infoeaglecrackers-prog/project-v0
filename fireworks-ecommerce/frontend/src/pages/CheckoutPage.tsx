@@ -11,6 +11,8 @@ import OrderReview from "../components/checkout/OrderReview";
 import DropPointSelector from "../components/checkout/DropPointSelector";
 import Modal from "../components/common/Modal";
 import { paymentService } from "../services/paymentService";
+import { userService } from "../services/userService";
+import { updateUser } from "../store/slices/authSlice";
 import type { IAddress } from "../types";
 import type { IDropPoint } from "../services/dropPointService";
 import toast from "react-hot-toast";
@@ -38,6 +40,10 @@ export default function CheckoutPage() {
   const { cart } = useCart();
   const { loading } = useAppSelector((s) => s.orders);
   const addresses = useAppSelector((s) => s.address.addresses);
+  const user = useAppSelector((s) => s.auth.user);
+  const [phoneModal, setPhoneModal] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [savingPhone, setSavingPhone] = useState(false);
   const [step, setStep] = useState(0);
   const [selectedAddr, setSelectedAddr] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("upi");
@@ -97,6 +103,35 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (!user?.phone) {
+      setPhoneInput("");
+      setPhoneModal(true);
+      return;
+    }
+    await placeOrder();
+  };
+
+  const handleSavePhone = async () => {
+    if (!/^[6-9]\d{9}$/.test(phoneInput)) {
+      toast.error("Enter a valid 10-digit mobile number");
+      return;
+    }
+    setSavingPhone(true);
+    try {
+      await userService.updateProfile({ phone: phoneInput });
+      dispatch(updateUser({ phone: phoneInput }));
+      setPhoneModal(false);
+      toast.success("Mobile number saved");
+      await placeOrder();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Couldn't save mobile number");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
+
+  const placeOrder = async () => {
     if (!selectedAddr || !cart) return;
     if (subtotal < MINIMUM_ORDER_VALUE) {
       toast.error(`Minimum order value is ₹${MINIMUM_ORDER_VALUE.toLocaleString("en-IN")}. Add more items to proceed.`);
@@ -319,6 +354,28 @@ export default function CheckoutPage() {
 
       <Modal isOpen={addrModal} onClose={() => setAddrModal(false)} title={editAddr ? "Edit Address" : "Add New Address"}>
         <AddressForm initial={editAddr || undefined} onSubmit={handleAddrSave} onCancel={() => setAddrModal(false)} />
+      </Modal>
+
+      <Modal isOpen={phoneModal} onClose={() => setPhoneModal(false)} title="Add Your Mobile Number">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            We need a mobile number on your account before placing an order.
+          </p>
+          <input
+            type="tel"
+            maxLength={10}
+            value={phoneInput}
+            onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+            placeholder="10-digit mobile number"
+            className="input w-full"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => setPhoneModal(false)} className="btn-ghost flex-1">Cancel</button>
+            <button onClick={handleSavePhone} disabled={savingPhone} className="btn-primary flex-1">
+              {savingPhone ? "Saving..." : "Save & Continue"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -15,7 +15,7 @@ export default function UserTable({ users, onRoleChange, onDelete }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 dark:border-gray-700">
-            {["User", "Email", "Joined", "Role", "Actions"].map((h) => (
+            {["User", "Email", "Mobile", "Joined", "Role", "Actions"].map((h) => (
               <th key={h} className="py-3 px-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{h}</th>
             ))}
           </tr>
@@ -30,6 +30,7 @@ export default function UserTable({ users, onRoleChange, onDelete }: Props) {
                 </div>
               </td>
               <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{u.email}</td>
+              <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{u.phone || "—"}</td>
               <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{formatDate(u.createdAt || "")}</td>
               <td className="py-3 px-4">
                 <Badge label={u.role} color={u.role === "admin" ? "purple" : "gray"} />

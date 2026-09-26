@@ -9,6 +9,54 @@ import { invalidateProductCache } from "../utils/cache";
 
 const PRODUCTS_PER_PAGE = 12;
 
+type ProductImageInput = {
+  public_id: string;
+  url: string;
+  alt: string;
+};
+
+const parseJsonField = <T>(value: unknown, fallback: T): T => {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeImageAltTexts = (value: unknown, count: number, fallbackName: string): string[] => {
+  const parsed = Array.isArray(value)
+    ? value
+    : parseJsonField<unknown[]>(value, []);
+
+  return Array.from({ length: count }, (_, index) => {
+    const raw = typeof parsed[index] === "string" ? parsed[index] : "";
+    const alt = raw.trim();
+    return alt || `${fallbackName} image ${index + 1}`;
+  });
+};
+
+const normalizeExistingImages = (
+  currentImages: ProductImageInput[],
+  value: unknown,
+  fallbackName: string
+): ProductImageInput[] => {
+  const parsed = parseJsonField<Array<Partial<ProductImageInput>>>(value, []);
+  if (!parsed.length) return currentImages;
+
+  const altByPublicId = new Map(
+    parsed
+      .filter((image) => typeof image.public_id === "string")
+      .map((image) => [image.public_id as string, (image.alt || "").trim()])
+  );
+
+  return currentImages.map((image, index) => ({
+    ...image,
+    alt: altByPublicId.get(image.public_id) || image.alt || `${fallbackName} image ${index + 1}`,
+  }));
+};
+
 // If a discount % is given without an explicit original price, derive the
 // original price from it so the existing price-vs-originalPrice discount
 // badge (ProductCard/ProductDetailPage) reflects it automatically.
@@ -126,14 +174,16 @@ export const createProduct = catchAsync(
     }
 
     // Upload all images to Cloudinary
+    const imageAltTexts = normalizeImageAltTexts(req.body.imageAltTexts, files.length, String(req.body.name || "Product"));
+
     const uploadPromises = files.map(
-      (file) =>
-        new Promise<{ public_id: string; url: string }>((resolve, reject) => {
+      (file, index) =>
+        new Promise<ProductImageInput>((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { folder: "fireworks/products" },
             (error, result) => {
               if (error || !result) return reject(error);
-              resolve({ public_id: result.public_id, url: result.secure_url });
+              resolve({ public_id: result.public_id, url: result.secure_url, alt: imageAltTexts[index] });
             }
           );
           streamifier.createReadStream(file.buffer).pipe(stream);
@@ -166,6 +216,16 @@ export const updateProduct = catchAsync(
     const product = await Product.findById(req.params.id);
     if (!product) return next(new AppError("Product not found.", 404));
 
+    product.images = normalizeExistingImages(
+      product.images.map((image) => ({
+        public_id: image.public_id,
+        url: image.url,
+        alt: image.alt,
+      })),
+      req.body.existingImages,
+      String(req.body.name || product.name || "Product")
+    );
+
     if (req.body.tags && typeof req.body.tags === "string") {
       req.body.tags = req.body.tags.split(",").map((t: string) => t.trim());
     }
@@ -173,14 +233,15 @@ export const updateProduct = catchAsync(
     // If images were uploaded in the update request, upload them to Cloudinary
     const files = req.files as Express.Multer.File[] | undefined;
     if (files && files.length > 0) {
+      const imageAltTexts = normalizeImageAltTexts(req.body.imageAltTexts, files.length, String(req.body.name || product.name || "Product"));
       const uploadPromises = files.map(
-        (file) =>
-          new Promise<{ public_id: string; url: string }>((resolve, reject) => {
+        (file, index) =>
+          new Promise<ProductImageInput>((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
               { folder: "fireworks/products" },
               (error, result) => {
                 if (error || !result) return reject(error);
-                resolve({ public_id: result.public_id, url: result.secure_url });
+                resolve({ public_id: result.public_id, url: result.secure_url, alt: imageAltTexts[index] });
               }
             );
             streamifier.createReadStream(file.buffer).pipe(stream);
@@ -212,7 +273,7 @@ export const updateProduct = catchAsync(
     // Apply any provided fields onto the document and save
     Object.keys(req.body).forEach((key) => {
       // Avoid overwriting images array from the body if present; we manage images above
-      if (key === "images") return;
+      if (["images", "imageAltTexts", "existingImages"].includes(key)) return;
       // @ts-ignore
       product[key] = req.body[key];
     });
@@ -260,14 +321,16 @@ export const uploadProductImages = catchAsync(
       return next(new AppError("A product can have a maximum of 5 images.", 400));
     }
 
+    const imageAltTexts = normalizeImageAltTexts(req.body.imageAltTexts, files.length, product.name || "Product");
+
     const uploadPromises = files.map(
-      (file) =>
-        new Promise<{ public_id: string; url: string }>((resolve, reject) => {
+      (file, index) =>
+        new Promise<ProductImageInput>((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { folder: "fireworks/products" },
             (error, result) => {
               if (error || !result) return reject(error);
-              resolve({ public_id: result.public_id, url: result.secure_url });
+              resolve({ public_id: result.public_id, url: result.secure_url, alt: imageAltTexts[index] });
             }
           );
           streamifier.createReadStream(file.buffer).pipe(stream);

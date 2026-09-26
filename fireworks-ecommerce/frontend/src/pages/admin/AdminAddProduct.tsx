@@ -13,6 +13,7 @@ export default function AdminAddProduct() {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [imageAltTexts, setImageAltTexts] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -23,11 +24,17 @@ export default function AdminAddProduct() {
     const files = Array.from(e.target.files || []);
     setImages((prev) => [...prev, ...files]);
     setPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+    setImageAltTexts((prev) => [...prev, ...files.map(() => "")]);
   };
 
   const removeImage = (i: number) => {
     setImages((prev) => prev.filter((_, idx) => idx !== i));
     setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+    setImageAltTexts((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  const updateImageAltText = (index: number, value: string) => {
+    setImageAltTexts((prev) => prev.map((alt, currentIndex) => (currentIndex === index ? value : alt)));
   };
 
   const handleSubmit = async (data: Record<string, unknown>) => {
@@ -57,6 +64,7 @@ export default function AdminAddProduct() {
       images.forEach((file) => {
         formData.append("images", file);
       });
+      formData.append("imageAltTexts", JSON.stringify(imageAltTexts));
 
       await productService.create(formData);
       toast.success("Product created!");
@@ -81,11 +89,20 @@ export default function AdminAddProduct() {
         <h3 className="font-semibold text-dark dark:text-gray-100 mb-4">Product Images</h3>
         <div className="flex flex-wrap gap-3 mb-3">
           {previews.map((src, i) => (
-            <div key={i} className="relative w-20 h-20">
-              <img src={src} className="w-full h-full object-cover rounded-xl" />
-              <button onClick={() => removeImage(i)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full shadow p-0.5 text-red-500">
-                <X size={12} />
-              </button>
+            <div key={i} className="w-28">
+              <div className="relative w-20 h-20 mb-2">
+                <img src={src} alt={imageAltTexts[i] || `Product upload ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
+                <button onClick={() => removeImage(i)} className="absolute -top-1.5 -right-1.5 bg-white rounded-full shadow p-0.5 text-red-500">
+                  <X size={12} />
+                </button>
+              </div>
+              <input
+                value={imageAltTexts[i] || ""}
+                onChange={(e) => updateImageAltText(i, e.target.value)}
+                placeholder="Alt text"
+                className="input-field text-xs"
+                maxLength={160}
+              />
             </div>
           ))}
           <button onClick={() => fileRef.current?.click()} className="w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:border-primary">
@@ -94,7 +111,7 @@ export default function AdminAddProduct() {
           </button>
         </div>
         <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
-        <p className="text-xs text-gray-400 dark:text-gray-500">First image will be the main image. Max 5 images.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">First image will be the main image. Add SEO-friendly alt text for each image. Max 5 images.</p>
       </div>
 
       <div className="card p-6">

@@ -3,6 +3,7 @@ import mongoose, { Document, Schema, Model, Types } from "mongoose";
 export interface IProductImage {
   public_id: string;
   url: string;
+  alt: string;
 }
 
 export interface IProduct extends Document {
@@ -77,6 +78,12 @@ const ProductSchema = new Schema<IProduct>(
       {
         public_id: { type: String, required: true },
         url: { type: String, required: true },
+        alt: {
+          type: String,
+          required: [true, "Image alt text is required"],
+          trim: true,
+          maxlength: [160, "Image alt text cannot exceed 160 characters"],
+        },
       },
     ],
     ratings: { type: Number, default: 0, min: 0, max: 5 },

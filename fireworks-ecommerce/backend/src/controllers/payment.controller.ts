@@ -12,7 +12,7 @@ import sendEmail from "../utils/sendEmail";
 import { orderConfirmationTemplate } from "../templates/email.templates";
 import { generateInvoicePDF } from "../utils/generateInvoice";
 import { resolvePromoDiscount } from "../utils/applyPromo";
-import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
+import { sendAdminOrderInvoice } from "../utils/sendWhatsAppInvoice";
 import { IOrderItem } from "../models/Order";
 
 interface OrderItemInput {
@@ -355,9 +355,17 @@ export const verifyPayment = catchAsync(
         console.error("Order confirmation email failed:", err);
       }
 
-      if (invoicePdf && req.user!.phone) {
+      if (invoicePdf) {
         try {
-          await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+          await sendAdminOrderInvoice({
+            customerName: req.user!.name,
+            customerPhone: req.user!.phone,
+            customerEmail: req.user!.email,
+            orderId: order._id.toString(),
+            invoicePdf,
+            totalAmount,
+            shippingAddress: order.shippingAddress,
+          });
         } catch (err) {
           console.error("WhatsApp invoice send failed:", err);
         }
@@ -480,9 +488,17 @@ export const verifyPayForOrder = catchAsync(
       console.error("Payment confirmation email failed:", err);
     }
 
-    if (invoicePdf && req.user!.phone) {
+    if (invoicePdf) {
       try {
-        await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+        await sendAdminOrderInvoice({
+          customerName: req.user!.name,
+          customerPhone: req.user!.phone,
+          customerEmail: req.user!.email,
+          orderId: order._id.toString(),
+          invoicePdf,
+          totalAmount: order.totalAmount,
+          shippingAddress: order.shippingAddress,
+        });
       } catch (err) {
         console.error("WhatsApp invoice send failed:", err);
       }

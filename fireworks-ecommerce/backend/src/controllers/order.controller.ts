@@ -9,7 +9,7 @@ import { orderConfirmationTemplate, paymentRequestTemplate } from "../templates/
 import { buildUpiIntent, upiQrBuffer } from "../utils/upi";
 import { generateInvoicePDF } from "../utils/generateInvoice";
 import { resolvePromoDiscount } from "../utils/applyPromo";
-import { sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
+import { sendAdminOrderInvoice } from "../utils/sendWhatsAppInvoice";
 import { IOrderItem, PaymentMethod } from "../models/Order";
 
 const GST_RATE = 0;
@@ -194,9 +194,17 @@ export const placeOrder = catchAsync(
         console.error("Order confirmation email failed:", err);
       }
 
-      if (invoicePdf && req.user!.phone) {
+      if (invoicePdf) {
         try {
-          await sendWhatsAppInvoice(req.user!.phone, req.user!.name, order._id.toString(), invoicePdf);
+          await sendAdminOrderInvoice({
+            customerName: req.user!.name,
+            customerPhone: req.user!.phone,
+            customerEmail: req.user!.email,
+            orderId: order._id.toString(),
+            invoicePdf,
+            totalAmount,
+            shippingAddress: order.shippingAddress,
+          });
         } catch (err) {
           console.error("WhatsApp invoice send failed:", err);
         }

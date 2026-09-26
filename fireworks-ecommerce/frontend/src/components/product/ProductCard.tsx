@@ -137,6 +137,9 @@ export default function ProductCard({ product }: Props) {
     return { background: "linear-gradient(135deg, #c9184a 0%, #e02b6a 100%)" };
   };
 
+  const primaryImage = product.images?.[0];
+  const primaryImageAlt = primaryImage?.alt || product.name;
+
   return (
     <>
       <Link
@@ -150,8 +153,8 @@ export default function ProductCard({ product }: Props) {
         {/* ── IMAGE ──────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-t-2xl aspect-[4/3]" onClick={handleImageClick}>
           <img
-            src={product.images?.[0]?.url || "https://placehold.co/400x300?text=No+Image"}
-            alt={product.name}
+            src={primaryImage?.url || "https://placehold.co/400x300?text=No+Image"}
+            alt={primaryImageAlt}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out cursor-pointer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent
@@ -324,8 +327,8 @@ export default function ProductCard({ product }: Props) {
         >
           <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-black/5">
             <img
-              src={product.images?.[0]?.url || "https://placehold.co/400x300?text=No+Image"}
-              alt={product.name}
+              src={primaryImage?.url || "https://placehold.co/400x300?text=No+Image"}
+              alt={primaryImageAlt}
               className="w-full h-full object-contain scale-110 transition-transform duration-300"
             />
             <button
