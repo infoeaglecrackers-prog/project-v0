@@ -207,7 +207,7 @@ export default function OrderDetailPage() {
             <h3 className="font-semibold text-dark dark:text-gray-100 mb-3">Deliver To</h3>
             <p className="font-medium text-sm dark:text-gray-200">{addr?.fullName}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{addr?.addressLine1}, {addr?.city}, {addr?.state} - {addr?.pincode}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">📞 {addr?.phone}</p>
+            <p className="text-sm text-black dark:text-white">📞 {addr?.phone}</p>
           </div>
 
           {/* Actions */}

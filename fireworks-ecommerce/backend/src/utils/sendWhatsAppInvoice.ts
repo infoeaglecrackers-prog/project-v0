@@ -36,7 +36,7 @@ const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 // The template must be created + approved in Meta WhatsApp Manager first — see backend/.env comments.
 const TEMPLATE_NAME = process.env.WHATSAPP_TEMPLATE_NAME || "order_invoice";
-const ADMIN_TEMPLATE_NAME = process.env.WHATSAPP_ADMIN_ORDER_TEMPLATE_NAME || "admin_order_invoice";
+const ADMIN_TEMPLATE_NAME = process.env.WHATSAPP_ADMIN_ORDER_TEMPLATE_NAME?.trim();
 const DEFAULT_ADMIN_ORDER_PHONE = process.env.WHATSAPP_ADMIN_ORDER_PHONE || "6382927769";
 
 // India-only: stored phone numbers are plain 10-digit mobiles (see User.ts phone regex).
@@ -141,18 +141,23 @@ export const sendAdminOrderInvoice = async ({
   totalAmount,
   shippingAddress,
 }: AdminOrderWhatsAppInput): Promise<void> => {
+  const templateName = ADMIN_TEMPLATE_NAME || TEMPLATE_NAME;
+  const bodyParameters = ADMIN_TEMPLATE_NAME
+    ? [
+        customerName,
+        customerPhone || shippingAddress.phone || "N/A",
+        customerEmail || "N/A",
+        orderId,
+        `Rs. ${totalAmount.toFixed(2)}`,
+        formatAddress(shippingAddress),
+      ]
+    : [customerName, orderId];
+
   await sendWhatsAppDocumentTemplate({
     to: DEFAULT_ADMIN_ORDER_PHONE,
-    templateName: ADMIN_TEMPLATE_NAME,
+    templateName,
     filename: `Invoice-${orderId}.pdf`,
     pdfBuffer: invoicePdf,
-    bodyParameters: [
-      customerName,
-      customerPhone || shippingAddress.phone || "N/A",
-      customerEmail || "N/A",
-      orderId,
-      `Rs. ${totalAmount.toFixed(2)}`,
-      formatAddress(shippingAddress),
-    ],
+    bodyParameters,
   });
 };
