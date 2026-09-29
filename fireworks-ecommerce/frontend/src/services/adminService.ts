@@ -6,6 +6,7 @@ export const adminService = {
   // Orders
   getOrders: (params = {}) => api.get("/admin/orders", { params }),
   getOrderById: (id: string) => api.get(`/admin/orders/${id}`),
+  createManualOrder: (data: object) => api.post("/admin/orders/manual", data),
   updateOrderStatus: (id: string, data: { status: string; trackingNumber?: string; courier?: string }) =>
     api.put(`/admin/orders/${id}/status`, data),
 

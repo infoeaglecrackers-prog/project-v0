@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Tag, TicketPercent, MapPin, Mail, ChevronLeft, Menu, X, BarChart3, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { NavLink, Outlet, Link } from "react-router-dom";
+import { LayoutDashboard, Package, ShoppingBag, PlusCircle, Users, Tag, TicketPercent, MapPin, Mail, ChevronLeft, Menu, X, BarChart3, TrendingUp } from "lucide-react";
 
 const links = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -9,6 +8,7 @@ const links = [
   { to: "/admin/product-listing-format", label: "Product Format", icon: BarChart3 },
   { to: "/admin/product-sales", label: "Product Sales", icon: TrendingUp },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/admin/orders/create", label: "Create Order", icon: PlusCircle },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/categories", label: "Categories", icon: Tag },
   { to: "/admin/promo-codes", label: "Promo Codes", icon: TicketPercent },

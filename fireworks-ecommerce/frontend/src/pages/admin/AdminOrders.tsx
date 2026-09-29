@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import { fetchAdminOrders } from "../../store/slices/adminSlice";
 import { adminService } from "../../services/adminService";
 import OrderTable from "../../components/admin/OrderTable";
 import Pagination from "../../components/common/Pagination";
 import Loader from "../../components/common/Loader";
+import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function AdminOrders() {
@@ -41,7 +43,12 @@ export default function AdminOrders() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold text-dark dark:text-gray-100 mb-6">Orders</h1>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h1 className="text-xl font-bold text-dark dark:text-gray-100">Orders</h1>
+        <Link to="/admin/orders/create" className="btn-primary flex items-center gap-2 text-sm">
+          <Plus size={16} /> New Order
+        </Link>
+      </div>
       <div className="card overflow-hidden">
         <OrderTable orders={orders} onStatusChange={handleStatusChange} onPaymentStatusChange={handlePaymentStatusChange} />
       </div>

@@ -39,11 +39,11 @@ export default function AdminUsers() {
   const totalUsers = pagination?.totalUsers || 0;
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 sm:p-6">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
         <div>
-          <h1 className="text-xl font-bold text-dark dark:text-gray-100">Users</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total users: {totalUsers}</p>
+          <h1 className="text-lg sm:text-xl font-bold text-dark dark:text-gray-100">Users</h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Total users: {totalUsers}</p>
         </div>
       </div>
       <div className="card overflow-hidden">

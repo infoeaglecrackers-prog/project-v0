@@ -72,8 +72,20 @@ export interface IStatusHistory {
   note?: string;
 }
 
+/** Customer details typed in by an admin for phone/offline orders that have no linked account. */
+export interface IGuestInfo {
+  name: string;
+  phone: string;
+  email?: string;
+}
+
 export interface IOrder extends Document {
-  user: Types.ObjectId;
+  /** Absent for admin-created manual orders — see `guestInfo` instead. */
+  user?: Types.ObjectId;
+  guestInfo?: IGuestInfo;
+  isManualOrder?: boolean;
+  /** Admin who created a manual order, for auditing. */
+  createdByAdmin?: Types.ObjectId;
   orderItems: IOrderItem[];
   shippingAddress: IShippingAddress;
   paymentInfo: IPaymentInfo;
@@ -100,8 +112,14 @@ const OrderSchema = new Schema<IOrder>(
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "User is required"],
     },
+    guestInfo: {
+      name: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      email: { type: String, trim: true },
+    },
+    isManualOrder: { type: Boolean, default: false },
+    createdByAdmin: { type: Schema.Types.ObjectId, ref: "User" },
     orderItems: [
       {
         product: { type: Schema.Types.ObjectId, ref: "Product", required: true },

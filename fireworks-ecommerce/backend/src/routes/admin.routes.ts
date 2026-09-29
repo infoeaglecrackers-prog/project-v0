@@ -4,6 +4,7 @@ import {
   getDashboardStats,
   getAllOrders,
   getOrderDetail,
+  createManualOrder,
   updateOrderStatus,
   updatePaymentStatus,
   verifyUpiPayment,
@@ -37,6 +38,37 @@ router.get("/products/low-stock", getLowStockProducts);
 // ─── Orders ────────────────────────────────────────────────────────────────────
 router.get("/orders", getAllOrders);
 router.get("/orders/:id", getOrderDetail);
+
+// Manual/offline order entry — admin fills in the customer + billing details.
+router.post(
+  "/orders/manual",
+  [
+    body("items").isArray({ min: 1 }).withMessage("At least one item is required"),
+    body("items.*.productId").notEmpty().withMessage("Product ID is required"),
+    body("items.*.quantity").isInt({ min: 1 }).withMessage("Quantity must be at least 1"),
+    body("customer.name").trim().notEmpty().withMessage("Customer name is required"),
+    body("customer.phone")
+      .matches(/^[6-9]\d{9}$/)
+      .withMessage("Valid 10-digit phone number required"),
+    body("customer.email").optional({ checkFalsy: true }).isEmail().withMessage("Valid email required"),
+    body("shippingAddress.fullName").notEmpty().withMessage("Billing name is required"),
+    body("shippingAddress.phone")
+      .matches(/^[6-9]\d{9}$/)
+      .withMessage("Valid billing phone number required"),
+    body("shippingAddress.addressLine1").notEmpty().withMessage("Address line 1 is required"),
+    body("shippingAddress.city").notEmpty().withMessage("City is required"),
+    body("shippingAddress.state").notEmpty().withMessage("State is required"),
+    body("shippingAddress.pincode")
+      .matches(/^\d{6}$/)
+      .withMessage("Valid 6-digit pincode required"),
+    body("paymentMethod")
+      .isIn(["upi", "pay_later", "razorpay", "cod"])
+      .withMessage("Invalid payment method"),
+    body("paymentStatus").optional().isIn(["paid", "pending"]).withMessage("Invalid payment status"),
+  ],
+  validate,
+  createManualOrder
+);
 
 router.put(
   "/orders/:id/status",

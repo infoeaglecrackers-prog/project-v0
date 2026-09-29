@@ -39,7 +39,7 @@ export const getUpiIntent = catchAsync(
     );
     if (!order) return next(new AppError("Order not found.", 404));
 
-    if (order.user.toString() !== req.user!._id.toString()) {
+    if (!order.user || order.user.toString() !== req.user!._id.toString()) {
       return next(new AppError("Not authorized.", 403));
     }
     if (order.orderStatus === "AwaitingVerification") {
@@ -105,7 +105,7 @@ export const submitUtr = catchAsync(
     const order = await Order.findById(req.params.orderId);
     if (!order) return next(new AppError("Order not found.", 404));
 
-    if (order.user.toString() !== req.user!._id.toString()) {
+    if (!order.user || order.user.toString() !== req.user!._id.toString()) {
       return next(new AppError("Not authorized.", 403));
     }
     if (order.orderStatus !== "AwaitingPayment") {
@@ -390,7 +390,7 @@ export const createRazorpayOrderForExisting = catchAsync(
     );
     if (!order) return next(new AppError("Order not found.", 404));
 
-    if (order.user.toString() !== req.user!._id.toString()) {
+    if (!order.user || order.user.toString() !== req.user!._id.toString()) {
       return next(new AppError("Not authorized.", 403));
     }
     if (order.orderStatus !== "AwaitingPayment") {

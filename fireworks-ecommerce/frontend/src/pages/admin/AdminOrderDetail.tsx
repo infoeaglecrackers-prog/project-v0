@@ -233,9 +233,12 @@ export default function AdminOrderDetail() {
         </div>
         <div className="space-y-4">
           <div className="card p-5">
-            <h3 className="font-semibold text-dark dark:text-gray-100 mb-3">Customer</h3>
-            <p className="text-sm font-medium dark:text-gray-200">{(order.user as unknown as { name: string })?.name}</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">{(order.user as unknown as { email: string })?.email}</p>
+            <h3 className="font-semibold text-dark dark:text-gray-100 mb-3 flex items-center gap-2">
+              Customer
+              {order.isManualOrder && <Badge label="Manual order" color="blue" />}
+            </h3>
+            <p className="text-sm font-medium dark:text-gray-200">{(order.user as unknown as { name: string })?.name || order.guestInfo?.name}</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">{(order.user as unknown as { email: string })?.email || order.guestInfo?.email || order.guestInfo?.phone}</p>
           </div>
           <div className="card p-5">
             <h3 className="font-semibold text-dark dark:text-gray-100 mb-3">Shipping</h3>
@@ -290,9 +293,9 @@ export default function AdminOrderDetail() {
         <div className="grid grid-cols-2 gap-8 mb-6 text-xs">
           <div className="border p-3 rounded">
             <p className="font-bold uppercase mb-1">Billed To (Customer):</p>
-            <p className="font-semibold text-sm">{(order.user as unknown as { name?: string })?.name || addr?.fullName}</p>
-            <p>Email: {(order.user as unknown as { email?: string })?.email || "N/A"}</p>
-            <p>Phone: {addr?.phone}</p>
+            <p className="font-semibold text-sm">{(order.user as unknown as { name?: string })?.name || order.guestInfo?.name || addr?.fullName}</p>
+            <p>Email: {(order.user as unknown as { email?: string })?.email || order.guestInfo?.email || "N/A"}</p>
+            <p>Phone: {order.guestInfo?.phone || addr?.phone}</p>
           </div>
           <div className="border p-3 rounded">
             <p className="font-bold uppercase mb-1">Shipping & Pickup Details:</p>

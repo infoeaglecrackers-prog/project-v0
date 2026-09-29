@@ -36,8 +36,13 @@ export default function OrderTable({ orders, onStatusChange, onPaymentStatusChan
               <tr key={order._id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="py-3 px-4 font-mono font-medium text-dark dark:text-gray-100">#{order._id.slice(-8).toUpperCase()}</td>
                 <td className="py-3 px-4">
-                  <p className="font-medium dark:text-gray-200">{(order.user as unknown as { name: string })?.name || "—"}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{(order.user as unknown as { email: string })?.email}</p>
+                  <p className="font-medium dark:text-gray-200 flex items-center gap-1.5">
+                    {(order.user as unknown as { name: string })?.name || order.guestInfo?.name || "—"}
+                    {order.isManualOrder && <Badge label="Manual" color="blue" />}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {(order.user as unknown as { email: string })?.email || order.guestInfo?.email || order.guestInfo?.phone}
+                  </p>
                 </td>
                 <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{formatDate(order.createdAt)}</td>
                 <td className="py-3 px-4 font-medium dark:text-gray-200">{formatCurrency(order.totalAmount)}</td>
@@ -106,8 +111,11 @@ export default function OrderTable({ orders, onStatusChange, onPaymentStatusChan
 
             <div className="flex items-center justify-between text-sm">
               <div>
-                <p className="font-medium dark:text-gray-200">{(order.user as unknown as { name: string })?.name || "—"}</p>
-                <p className="text-xs text-gray-400">{(order.user as unknown as { email: string })?.email}</p>
+                <p className="font-medium dark:text-gray-200 flex items-center gap-1.5">
+                  {(order.user as unknown as { name: string })?.name || order.guestInfo?.name || "—"}
+                  {order.isManualOrder && <Badge label="Manual" color="blue" />}
+                </p>
+                <p className="text-xs text-gray-400">{(order.user as unknown as { email: string })?.email || order.guestInfo?.email || order.guestInfo?.phone}</p>
               </div>
               <span className="font-semibold text-dark dark:text-gray-100">{formatCurrency(order.totalAmount)}</span>
             </div>

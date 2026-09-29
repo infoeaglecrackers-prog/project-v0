@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import Order from "../models/Order";
+import { Types } from "mongoose";
+import Order, { IOrderItem, PaymentMethod } from "../models/Order";
 import Product from "../models/Product";
 import Cart from "../models/Cart";
 import AppError from "../utils/AppError";
@@ -10,7 +11,6 @@ import { buildUpiIntent, upiQrBuffer } from "../utils/upi";
 import { generateInvoicePDF } from "../utils/generateInvoice";
 import { resolvePromoDiscount } from "../utils/applyPromo";
 import { sendAdminOrderInvoice } from "../utils/sendWhatsAppInvoice";
-import { IOrderItem, PaymentMethod } from "../models/Order";
 
 const GST_RATE = 0;
 // Shipping is collected at the point of delivery, not added to the upfront total
@@ -288,10 +288,9 @@ export const getOrderDetail = catchAsync(
     const order = await Order.findById(req.params.id).populate("user", "name email");
     if (!order) return next(new AppError("Order not found.", 404));
 
-    if (
-      order.user._id.toString() !== req.user!._id.toString() &&
-      req.user!.role !== "admin"
-    ) {
+    // Manual orders have no linked account — only an admin can view them.
+    const ownerId = order.user ? (order.user as unknown as { _id: Types.ObjectId })._id.toString() : null;
+    if (ownerId !== req.user!._id.toString() && req.user!.role !== "admin") {
       return next(new AppError("Not authorized to view this order.", 403));
     }
 
@@ -305,10 +304,8 @@ export const cancelOrder = catchAsync(
     const order = await Order.findById(req.params.id);
     if (!order) return next(new AppError("Order not found.", 404));
 
-    if (
-      order.user.toString() !== req.user!._id.toString() &&
-      req.user!.role !== "admin"
-    ) {
+    const ownerId = order.user ? order.user.toString() : null;
+    if (ownerId !== req.user!._id.toString() && req.user!.role !== "admin") {
       return next(new AppError("Not authorized.", 403));
     }
 
@@ -345,14 +342,17 @@ export const getInvoice = catchAsync(
     const order = await Order.findById(req.params.id).populate("user", "name email");
     if (!order) return next(new AppError("Order not found.", 404));
 
-    if (
-      order.user._id.toString() !== req.user!._id.toString() &&
-      req.user!.role !== "admin"
-    ) {
+    // Manual orders have no linked account — only an admin can view them.
+    const ownerId = order.user ? (order.user as unknown as { _id: Types.ObjectId })._id.toString() : null;
+    if (ownerId !== req.user!._id.toString() && req.user!.role !== "admin") {
       return next(new AppError("Not authorized.", 403));
     }
 
-    const invoicePdf = await generateInvoicePDF(order, order.user as unknown as { name: string; email: string });
+    const invoiceUser = order.user
+      ? (order.user as unknown as { name: string; email: string })
+      : { name: order.guestInfo?.name || order.shippingAddress.fullName, email: order.guestInfo?.email || "" };
+
+    const invoicePdf = await generateInvoicePDF(order, invoiceUser);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="Invoice-${order._id}.pdf"`);

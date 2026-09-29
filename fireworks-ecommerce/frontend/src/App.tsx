@@ -43,6 +43,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminAddProduct from "./pages/admin/AdminAddProduct";
 import AdminEditProduct from "./pages/admin/AdminEditProduct";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminCreateOrder from "./pages/admin/AdminCreateOrder";
 import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -106,6 +107,7 @@ function AppContent() {
             <Route path="/admin/products/add" element={<AdminAddProduct />} />
             <Route path="/admin/products/edit/:id" element={<AdminEditProduct />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
+            <Route path="/admin/orders/create" element={<AdminCreateOrder />} />
             <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/categories" element={<AdminCategories />} />

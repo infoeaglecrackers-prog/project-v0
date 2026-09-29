@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import Order from "../models/Order";
+import Order, { IOrderItem, IShippingAddress, OrderStatus, PaymentMethod } from "../models/Order";
 import Product from "../models/Product";
 import User from "../models/User";
 import Category from "../models/Category";
@@ -15,9 +15,8 @@ import {
   orderConfirmationTemplate,
 } from "../templates/email.templates";
 import { generateInvoicePDF } from "../utils/generateInvoice";
-import { sendAdminOrderInvoice } from "../utils/sendWhatsAppInvoice";
+import { sendAdminOrderInvoice, sendWhatsAppInvoice } from "../utils/sendWhatsAppInvoice";
 import { getAdminRecipientLine } from "../utils/adminRecipients";
-import { OrderStatus } from "../models/Order";
 
 /** Rs. rather than ₹ — the rupee glyph mangles in some mail clients' default fonts. */
 const formatINR = (n: number): string => `Rs. ${n.toFixed(2)}`;
@@ -135,6 +134,170 @@ export const getOrderDetail = catchAsync(
     const order = await Order.findById(req.params.id).populate("user", "name email phone");
     if (!order) return next(new AppError("Order not found.", 404));
     res.status(200).json({ success: true, data: { order } });
+  }
+);
+
+interface ManualOrderItemInput {
+  productId: string;
+  quantity: number;
+  /** Overrides the product's catalog price — lets an admin honour a phone-negotiated rate. */
+  price?: number;
+}
+
+// ─── Create Manual Order (Admin) ──────────────────────────────────────────────
+// For orders taken over phone/WhatsApp where the admin enters the customer's
+// details and billing address directly instead of the customer checking out.
+export const createManualOrder = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {
+      items,
+      customer,
+      shippingAddress,
+      paymentMethod,
+      paymentStatus,
+      discountAmount,
+      shippingPrice,
+      notes,
+    } = req.body as {
+      items: ManualOrderItemInput[];
+      customer: { name: string; phone: string; email?: string };
+      shippingAddress: IShippingAddress;
+      paymentMethod: PaymentMethod;
+      paymentStatus?: "paid" | "pending";
+      discountAmount?: number;
+      shippingPrice?: number;
+      notes?: string;
+    };
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return next(new AppError("At least one item is required.", 400));
+    }
+
+    const products = await Product.find({ _id: { $in: items.map((i) => i.productId) } }).select(
+      "_id name price discountPrice stock images isActive"
+    );
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+    const orderItems: IOrderItem[] = [];
+    let itemsPrice = 0;
+
+    for (const item of items) {
+      const product = productMap.get(item.productId);
+      if (!product || !product.isActive) {
+        return next(new AppError(`Product not found: ${item.productId}`, 404));
+      }
+      if (item.quantity > product.stock) {
+        return next(
+          new AppError(`Insufficient stock for: ${product.name}. Only ${product.stock} left.`, 400)
+        );
+      }
+      const unitPrice =
+        typeof item.price === "number" && item.price >= 0 ? item.price : product.discountPrice ?? product.price;
+      itemsPrice += unitPrice * item.quantity;
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        image: product.images[0]?.url || "",
+        price: unitPrice,
+        quantity: item.quantity,
+      } as IOrderItem);
+    }
+
+    const discount = Number(discountAmount) || 0;
+    const shipping = Number(shippingPrice) || 0;
+    const totalAmount = parseFloat((itemsPrice - discount + shipping).toFixed(2));
+    const isPaid = paymentStatus === "paid";
+
+    const order = await Order.create({
+      guestInfo: { name: customer.name, phone: customer.phone, email: customer.email },
+      isManualOrder: true,
+      createdByAdmin: req.user!._id,
+      orderItems,
+      shippingAddress,
+      paymentInfo: {
+        method: paymentMethod || "cod",
+        status: isPaid ? "paid" : "pending",
+        paidAt: isPaid ? new Date() : undefined,
+      },
+      itemsPrice,
+      discountAmount: discount,
+      taxAmount: 0,
+      shippingPrice: shipping,
+      totalAmount,
+      orderStatus: isPaid ? "Processing" : "Pending",
+      statusHistory: [
+        {
+          status: isPaid ? "Processing" : "Pending",
+          updatedAt: new Date(),
+          note: notes ? `Manual order — ${notes}` : "Manual order created by admin",
+        },
+      ],
+    });
+
+    await Promise.all(
+      items.map((item) =>
+        Product.findByIdAndUpdate(item.productId, {
+          $inc: { stock: -item.quantity, sold: item.quantity },
+        })
+      )
+    );
+
+    let invoicePdf: Buffer | undefined;
+    try {
+      invoicePdf = await generateInvoicePDF(order, { name: customer.name, email: customer.email || "" });
+    } catch (err) {
+      console.error("Invoice PDF generation failed:", err);
+    }
+
+    if (invoicePdf) {
+      try {
+        await sendAdminOrderInvoice({
+          customerName: customer.name,
+          customerPhone: customer.phone,
+          customerEmail: customer.email,
+          orderId: order._id.toString(),
+          invoicePdf,
+          totalAmount,
+          shippingAddress: order.shippingAddress,
+        });
+      } catch (err) {
+        console.error("WhatsApp invoice send (admin copy) failed:", err);
+      }
+
+      if (customer.phone) {
+        try {
+          await sendWhatsAppInvoice(customer.phone, customer.name, order._id.toString(), invoicePdf);
+        } catch (err) {
+          console.error("WhatsApp invoice send (customer) failed:", err);
+        }
+      }
+    }
+
+    if (customer.email) {
+      try {
+        await sendEmail({
+          to: customer.email,
+          subject: `Order Confirmed — #${order._id}`,
+          html: orderConfirmationTemplate(
+            customer.name,
+            order._id.toString(),
+            orderItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            totalAmount
+          ),
+          attachments: invoicePdf
+            ? [{ filename: `Invoice-${order._id}.pdf`, content: invoicePdf, contentType: "application/pdf" }]
+            : undefined,
+        });
+      } catch (err) {
+        console.error("Order confirmation email failed:", err);
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      data: { order },
+    });
   }
 );
 

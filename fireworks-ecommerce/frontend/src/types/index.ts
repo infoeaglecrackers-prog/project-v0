@@ -172,7 +172,11 @@ export interface IOrderItem {
 
 export interface IOrder {
   _id: string;
-  user: string | IUser;
+  /** Absent for admin-created manual orders — see `guestInfo` instead. */
+  user?: string | IUser;
+  /** Customer details typed in by an admin for phone/offline orders with no account. */
+  guestInfo?: { name: string; phone: string; email?: string };
+  isManualOrder?: boolean;
   orderItems: IOrderItem[];
   /** alias for orderItems used in UI */
   items: IOrderItem[];

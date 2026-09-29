@@ -51,7 +51,8 @@ export const fetchAdminOrders = createAsyncThunk("admin/orders", async (params: 
 export const fetchAdminUsers = createAsyncThunk("admin/users", async (params: Record<string, unknown> = {}, { rejectWithValue }) => {
   try {
     const res = await adminService.getUsers(params);
-    return res.data.data;
+    // pagination is a sibling of data, not nested inside it — keep both
+    return { users: res.data.data.users, pagination: res.data.pagination };
   } catch (err: unknown) {
     const error = err as { response?: { data?: { message?: string } } };
     return rejectWithValue(error.response?.data?.message || "Failed");
