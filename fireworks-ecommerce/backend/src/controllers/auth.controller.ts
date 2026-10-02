@@ -38,10 +38,12 @@ export const register = catchAsync(
     // Send WhatsApp verification OTP — non-blocking, user can resend from the app
     const otp = user.getOtp();
     await user.save({ validateBeforeSave: false });
-    try {
-      await sendWhatsAppOtp(user.phone!, otp);
-    } catch (err) {
-      console.error("WhatsApp OTP failed:", err);
+    if (user.phone) {
+      try {
+        await sendWhatsAppOtp(user.phone, otp);
+      } catch (err) {
+        console.error("WhatsApp OTP failed:", err);
+      }
     }
 
     res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
@@ -134,7 +136,7 @@ export const login = catchAsync(
       return next(new AppError("Please provide email and password.", 400));
     }
 
-    const user = await User.findOne({ email }).select("+password +refreshToken");
+    const user = await User.findOne({ email: String(email).toLowerCase().trim() }).select("+password +refreshToken");
     if (!user) {
       return next(new AppError("Invalid email or password.", 401));
     }
@@ -286,7 +288,7 @@ export const refreshToken = catchAsync(
 // ─── Forgot Password ─────────────────────────────────────────────────────────
 export const forgotPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({ email: String(req.body.email).toLowerCase().trim() });
     if (!user) {
       return next(new AppError("User not found with that email.", 404));
     }

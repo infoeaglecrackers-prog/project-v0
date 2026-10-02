@@ -1,33 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../hooks/useAppDispatch";
 import { fetchAdminOrders } from "../../store/slices/adminSlice";
 import { adminService } from "../../services/adminService";
 import OrderTable from "../../components/admin/OrderTable";
-import Pagination from "../../components/common/Pagination";
 import Loader from "../../components/common/Loader";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
+// Large enough to return every order in one page — admin wants a single unpaginated list.
+const ALL_ORDERS_LIMIT = 100000;
+
 export default function AdminOrders() {
   const dispatch = useAppDispatch();
   const { orders, loading } = useAppSelector((s) => s.admin);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchAdminOrders({ page, limit: 10 })).then((r) => {
-      if (fetchAdminOrders.fulfilled.match(r)) {
-        setTotalPages(r.payload?.totalPages || 1);
-      }
-    });
-  }, [dispatch, page]);
+    void dispatch(fetchAdminOrders({ limit: ALL_ORDERS_LIMIT }));
+  }, [dispatch]);
 
   const handleStatusChange = async (orderId: string, status: string) => {
     try {
       await adminService.updateOrderStatus(orderId, { status });
       toast.success("Status updated");
-      dispatch(fetchAdminOrders({ page, limit: 10 }));
+      void dispatch(fetchAdminOrders({ limit: ALL_ORDERS_LIMIT }));
     } catch { toast.error("Failed"); }
   };
 
@@ -35,7 +31,7 @@ export default function AdminOrders() {
     try {
       await adminService.updatePaymentStatus(orderId, { status });
       toast.success("Payment status updated");
-      dispatch(fetchAdminOrders({ page, limit: 10 }));
+      void dispatch(fetchAdminOrders({ limit: ALL_ORDERS_LIMIT }));
     } catch { toast.error("Failed"); }
   };
 
@@ -52,7 +48,6 @@ export default function AdminOrders() {
       <div className="card overflow-hidden">
         <OrderTable orders={orders} onStatusChange={handleStatusChange} onPaymentStatusChange={handlePaymentStatusChange} />
       </div>
-      <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

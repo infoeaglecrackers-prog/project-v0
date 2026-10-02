@@ -80,7 +80,7 @@ const ProductSchema = new Schema<IProduct>(
         url: { type: String, required: true },
         alt: {
           type: String,
-          required: [true, "Image alt text is required"],
+          default: "",
           trim: true,
           maxlength: [160, "Image alt text cannot exceed 160 characters"],
         },

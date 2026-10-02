@@ -41,7 +41,8 @@ export const fetchDashboard = createAsyncThunk("admin/dashboard", async (_, { re
 export const fetchAdminOrders = createAsyncThunk("admin/orders", async (params: Record<string, unknown> = {}, { rejectWithValue }) => {
   try {
     const res = await adminService.getOrders(params);
-    return res.data.data;
+    // pagination is a sibling of data, not nested inside it — keep both
+    return { orders: res.data.data.orders, pagination: res.data.pagination };
   } catch (err: unknown) {
     const error = err as { response?: { data?: { message?: string } } };
     return rejectWithValue(error.response?.data?.message || "Failed");
@@ -88,7 +89,9 @@ const adminSlice = createSlice({
       .addCase(fetchAdminOrders.fulfilled, (state, action) => {
         state.loading = false;
         // API may return { orders: [...], pagination: {...} } or an array directly
-        state.orders = (action.payload && (action.payload as any).orders) ? (action.payload as any).orders : (action.payload as any) || [];
+        const payload = action.payload as any;
+        state.orders = payload && payload.orders ? payload.orders : payload || [];
+        if (payload?.pagination) state.pagination = payload.pagination;
       })
       .addCase(fetchAdminOrders.rejected, (state, action) => { state.loading = false; state.error = action.payload as string || 'Failed'; })
 

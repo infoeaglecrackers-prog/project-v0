@@ -57,11 +57,6 @@ const UserSchema = new Schema<IUser>(
     },
     phone: {
       type: String,
-      required: [
-        function (this: IUser) { return this.authProvider !== "google"; },
-        "WhatsApp/mobile number is required",
-      ],
-      match: [/^[6-9]\d{9}$/, "Please provide a valid 10-digit Indian mobile number"],
     },
     avatar: {
       public_id: { type: String },
