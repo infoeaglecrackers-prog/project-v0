@@ -204,7 +204,6 @@ export default function AdminEditProduct() {
           initial={product}
           onSubmit={handleSubmit as unknown as Parameters<typeof ProductForm>[0]["onSubmit"]}
           loading={saving}
-          hasImages={true}
         />
       </div>
     </div>

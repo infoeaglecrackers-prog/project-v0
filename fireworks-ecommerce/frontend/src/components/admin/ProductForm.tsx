@@ -7,7 +7,6 @@ interface Props {
   initial?: Partial<IProduct>;
   onSubmit: (data: FormData) => void;
   loading?: boolean;
-  hasImages?: boolean;
 }
 
 type FormData = {
@@ -21,7 +20,7 @@ type FormData = {
   specifications: { key: string; value: string }[];
 };
 
-export default function ProductForm({ initial, onSubmit, loading, hasImages = true }: Props) {
+export default function ProductForm({ initial, onSubmit, loading }: Props) {
   const categories = useAppSelector((s) => s.admin.categories);
   const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
     defaultValues: {
@@ -104,9 +103,8 @@ export default function ProductForm({ initial, onSubmit, loading, hasImages = tr
         ))}
       </div>
 
-      <button type="submit" disabled={loading || !hasImages} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
+      <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
         {loading ? "Saving..." : initial?._id ? "Update Product" : "Create Product"}
-        {!hasImages && !initial?._id && <span className="block text-xs mt-1">Add at least one image to continue</span>}
       </button>
     </form>
   );

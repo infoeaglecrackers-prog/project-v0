@@ -167,13 +167,10 @@ export const getProduct = catchAsync(
 
 // ─── Create Product ───────────────────────────────────────────────────────────
 export const createProduct = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const files = req.files as Express.Multer.File[];
-    if (!files || files.length === 0) {
-      return next(new AppError("At least one product image is required.", 400));
-    }
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const files = (req.files as Express.Multer.File[] | undefined) || [];
 
-    // Upload all images to Cloudinary
+    // Upload any provided images to Cloudinary — images are optional
     const imageAltTexts = normalizeImageAltTexts(req.body.imageAltTexts, files.length, String(req.body.name || "Product"));
 
     const uploadPromises = files.map(

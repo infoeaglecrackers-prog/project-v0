@@ -38,10 +38,6 @@ export default function AdminAddProduct() {
   };
 
   const handleSubmit = async (data: Record<string, unknown>) => {
-    if (images.length === 0) {
-      toast.error("Please add at least one product image");
-      return;
-    }
     setLoading(true);
     try {
       // Create FormData with product data and images
@@ -111,14 +107,13 @@ export default function AdminAddProduct() {
           </button>
         </div>
         <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
-        <p className="text-xs text-gray-400 dark:text-gray-500">First image will be the main image. Add SEO-friendly alt text for each image. Max 5 images.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">First image will be the main image. Add SEO-friendly alt text for each image. Max 5 images (optional).</p>
       </div>
 
       <div className="card p-6">
         <ProductForm 
           onSubmit={handleSubmit as unknown as Parameters<typeof ProductForm>[0]["onSubmit"]} 
           loading={loading} 
-          hasImages={images.length > 0}
         />
       </div>
     </div>

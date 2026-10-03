@@ -42,7 +42,6 @@ const ProductSchema = new Schema<IProduct>(
     },
     description: {
       type: String,
-      minlength: [10, "Description must be at least 10 characters"],
     },
     safetyInstructions: { type: String },
     price: {
