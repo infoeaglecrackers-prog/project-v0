@@ -47,7 +47,7 @@ export default function ProductRow({ product }: Props) {
     ? Math.round(((product.price - unitPrice) / product.price) * 100)
     : 0;
 
-  const maxQty = Math.min(product.stock, 10);
+  const maxQty = product.stock;
   const outOfStock = product.stock === 0;
   const inCart = cartQty > 0;
 

@@ -38,7 +38,7 @@ export default function ProductCard({ product }: Props) {
     if (cartQty > 0) setQty(cartQty);
   }, [cartQty]);
 
-  const maxQty = Math.min(product.stock, 10);
+  const maxQty = product.stock;
   const outOfStock = product.stock === 0;
   const delta = qty - cartQty; // positive = add more, zero = no change, negative = reduce
 
