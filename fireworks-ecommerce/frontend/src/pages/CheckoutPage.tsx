@@ -20,7 +20,7 @@ import { useCart } from "../hooks/useCart";
 import { RAZORPAY_ENABLED } from "../config/features";
 
 const STEPS = ["Address", "Payment", "Review"];
-const MINIMUM_ORDER_VALUE = 3000;
+const MINIMUM_ORDER_VALUE = 1000;
 
 // Restricts which tabs Razorpay's checkout shows, so the method picked in step 2 actually matters
 // instead of every option opening the same all-methods Razorpay screen.
