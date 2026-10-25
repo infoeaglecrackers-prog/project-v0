@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { useAppSelector } from "../../hooks/useAppDispatch";
 import { formatCurrency } from "../../utils/formatCurrency";
 
-const MINIMUM_ORDER_VALUE = 3000;
+const MINIMUM_ORDER_VALUE = 1000;
 
 // Persistent bottom bar shown on mobile once items are selected — mirrors the
 // desktop CartSummaryPanel so users don't need to open the cart drawer to check totals.
