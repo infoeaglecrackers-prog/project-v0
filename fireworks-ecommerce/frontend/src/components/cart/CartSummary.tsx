@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { useCart } from "../../hooks/useCart";
 
-const MINIMUM_ORDER_VALUE = 3000;
+const MINIMUM_ORDER_VALUE = 1000;
 
 interface Props {
   onCheckout?: () => void;
